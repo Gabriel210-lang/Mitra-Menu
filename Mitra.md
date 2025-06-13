@@ -1,6 +1,6 @@
 --[[
     Mitra Menu - Sistema de Cheat Otimizado
-    Melhor Menu da atualidade
+    Melhor Menu da atualidade! J & M
 ]]
 
 local P,LP,RS,C = game:GetService("Players"),game:GetService("Players").LocalPlayer,game:GetService("RunService"),workspace.CurrentCamera
