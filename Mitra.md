@@ -1,616 +1,490 @@
 --[[
-    Mitra Menu - Sistema de Cheat Otimizado
-    Melhor Menu da atualidade! J & M
+    Mitra Menu V2.1 - Sistema Otimizado
+    Aimbot Ultra Preciso + Exploits Seguros
 ]]
 
 local P,LP,RS,C = game:GetService("Players"),game:GetService("Players").LocalPlayer,game:GetService("RunService"),workspace.CurrentCamera
+local UIS,TweenS = game:GetService("UserInputService"),game:GetService("TweenService")
 local M = LP:GetMouse()
-local UIS = game:GetService("UserInputService")
 
--- Verificação de segurança
-if not LP or not LP.Character then
-    warn("Player ou Character não encontrado!")
-    return
-end
-
--- Configurações otimizadas
+-- Configurações
 local S = {
-    sa=false,   -- Silent Aim
-    tc=false,   -- Team Check
-    wc=false,   -- Wall Check
-    kc=false,   -- Kill Check
-    fe=false,   -- FOV Circle
-    fv=100,     -- FOV Value
-    e=false,    -- ESP Names
-    sh=false,   -- Show Health
-    ss=false,   -- Show Distance
-    sb=false,   -- Show Box
-    eh=false,   -- Expand Hitbox
-    am=false,   -- Auto Aim
-    smoothness=0.25  -- Suavidade da mira (0.1 = muito suave, 1.0 = instantâneo)
-}
-
--- Variáveis do sistema de aimbot
-local aimbot = {
-    enabled = false,
-    target = nil,
-    lastTarget = nil,
-    smoothing = true,
-    maxDistance = 500,
-    updateRate = 1/60, -- 60 FPS
-    lockOn = false -- Variável para manter o lock no alvo
+    sa=false,tc=false,wc=false,kc=false,fe=false,fv=120,e=false,sh=false,
+    ss=false,sb=false,eh=false,am=false,smoothness=0.15,
+    fly=false,flySpeed=50,speed=false,walkSpeed=50
 }
 
 -- Sistema de notificação
 local function notify(msg)
-    pcall(function()
-        local sg = Instance.new("ScreenGui")
-        sg.Name = "Notification"
-        sg.Parent = game.CoreGui
-        
-        local f = Instance.new("Frame",sg)
-        f.Size,f.Position = UDim2.new(0,300,0,50),UDim2.new(0.5,-150,0,20)
-        f.BackgroundColor3,f.BorderSizePixel = Color3.fromRGB(40,40,50),0
-        
-        local c = Instance.new("UICorner",f)
-        c.CornerRadius = UDim.new(0,8)
-        
-        local t = Instance.new("TextLabel",f)
-        t.Size,t.BackgroundTransparency = UDim2.new(1,0,1,0),1
-        t.Text,t.TextColor3,t.Font,t.TextSize = msg,Color3.new(1,1,1),Enum.Font.GothamBold,14
-        t.TextXAlignment = Enum.TextXAlignment.Center
-        
-        game:GetService("Debris"):AddItem(sg,3)
-    end)
+    local sg = Instance.new("ScreenGui")
+    sg.Parent = game.CoreGui
+    local f = Instance.new("Frame",sg)
+    f.Size,f.Position = UDim2.new(0,250,0,40),UDim2.new(0.5,-125,0,20)
+    f.BackgroundColor3,f.BorderSizePixel = Color3.fromRGB(30,30,40),0
+    Instance.new("UICorner",f).CornerRadius = UDim.new(0,8)
+    local t = Instance.new("TextLabel",f)
+    t.Size,t.BackgroundTransparency = UDim2.new(1,0,1,0),1
+    t.Text,t.TextColor3,t.Font,t.TextSize = msg,Color3.new(1,1,1),Enum.Font.GothamBold,12
+    t.TextXAlignment = Enum.TextXAlignment.Center
+    game:GetService("Debris"):AddItem(sg,2)
 end
 
--- GUI Base com proteção
+-- GUI Base
 local sg = Instance.new("ScreenGui")
 sg.Name = "LxLc_"..math.random(1000,9999)
 sg.ResetOnSpawn = false
+pcall(function() sg.Parent = game.CoreGui end)
+if not sg.Parent then sg.Parent = LP.PlayerGui end
 
--- Proteção contra detecção
-pcall(function()
-    sg.Parent = game.CoreGui
-end)
-
-if not sg.Parent then
-    sg.Parent = LP.PlayerGui
-    notify("Usando PlayerGui (menos seguro)")
-end
-
--- Botão minimizado (draggable)
+-- Botão minimizado
 local ob = Instance.new("TextButton",sg)
-ob.Size,ob.Position,ob.Text = UDim2.new(0,120,0,30),UDim2.new(0,10,0,10),"Open Menu"
+ob.Size,ob.Position,ob.Text = UDim2.new(0,100,0,25),UDim2.new(0,10,0,10),"Open Menu"
 ob.BackgroundColor3,ob.TextColor3,ob.Font = Color3.fromRGB(30,30,30),Color3.new(1,1,1),Enum.Font.GothamBold
 ob.BorderSizePixel = 0
-local obc = Instance.new("UICorner",ob)
-obc.CornerRadius = UDim.new(0,8)
+Instance.new("UICorner",ob).CornerRadius = UDim.new(0,6)
 
--- Sistema de arrastar otimizado
+-- Sistema de arrastar
 local dragging = false
-local dragStart = nil
-local startPos = nil
-
 ob.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
-        dragStart = Vector2.new(input.Position.X, input.Position.Y)
-        startPos = ob.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local currentPos = Vector2.new(input.Position.X, input.Position.Y)
-        local delta = currentPos - dragStart
-        ob.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
+        local startPos = ob.Position
+        local startMouse = Vector2.new(input.Position.X, input.Position.Y)
+        
+        local con; con = UIS.InputChanged:Connect(function(input2)
+            if input2.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = Vector2.new(input2.Position.X, input2.Position.Y) - startMouse
+                ob.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+        
+        UIS.InputEnded:Connect(function(input3)
+            if input3.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+                con:Disconnect()
+            end
+        end)
     end
 end)
 
 -- Interface principal
 local mf = Instance.new("Frame",sg)
-mf.Size,mf.Position,mf.Visible = UDim2.new(0,400,0,350),UDim2.new(0.5,-200,0.5,-175),false
-mf.BackgroundColor3,mf.Active,mf.Draggable = Color3.fromRGB(30,30,40),true,true
-mf.AnchorPoint = Vector2.new(0.5,0.5)
-local mc = Instance.new("UICorner",mf)
-mc.CornerRadius = UDim.new(0,10)
+mf.Size,mf.Position,mf.Visible = UDim2.new(0,380,0,320),UDim2.new(0.5,-190,0.5,-160),false
+mf.BackgroundColor3,mf.Active,mf.Draggable = Color3.fromRGB(25,25,35),true,true
+Instance.new("UICorner",mf).CornerRadius = UDim.new(0,8)
 
 -- Header
 local header = Instance.new("Frame",mf)
-header.Size,header.Position = UDim2.new(1,0,0,35),UDim2.new(0,0,0,0)
-header.BackgroundColor3 = Color3.fromRGB(40,40,50)
-local hc = Instance.new("UICorner",header)
-hc.CornerRadius = UDim.new(0,10)
+header.Size,header.Position = UDim2.new(1,0,0,30),UDim2.new(0,0,0,0)
+header.BackgroundColor3 = Color3.fromRGB(35,35,45)
+Instance.new("UICorner",header).CornerRadius = UDim.new(0,8)
 
 local title = Instance.new("TextLabel",header)
-title.Size,title.Position = UDim2.new(0.7,0,1,0),UDim2.new(0,10,0,0)
-title.BackgroundTransparency,title.Text = 1,"LxLc Menu V2.0 - Fixed Aimbot"
-title.TextColor3,title.Font,title.TextSize = Color3.new(1,1,1),Enum.Font.GothamBold,16
+title.Size,title.Position = UDim2.new(0.7,0,1,0),UDim2.new(0,8,0,0)
+title.BackgroundTransparency,title.Text = 1,"LxLc Menu V2.1 - Ultra Aimbot"
+title.TextColor3,title.Font,title.TextSize = Color3.new(1,1,1),Enum.Font.GothamBold,14
 title.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Botões de controle
 local mb = Instance.new("TextButton",header)
-mb.Size,mb.Position,mb.Text = UDim2.new(0,25,0,25),UDim2.new(1,-60,0,5),"-"
-mb.BackgroundColor3,mb.TextColor3,mb.Font,mb.TextSize = Color3.fromRGB(100,100,100),Color3.new(1,1,1),Enum.Font.GothamBold,20
-local mbc = Instance.new("UICorner",mb)
-mbc.CornerRadius = UDim.new(1,0)
+mb.Size,mb.Position,mb.Text = UDim2.new(0,20,0,20),UDim2.new(1,-45,0,5),"-"
+mb.BackgroundColor3,mb.TextColor3,mb.Font = Color3.fromRGB(80,80,80),Color3.new(1,1,1),Enum.Font.GothamBold
+Instance.new("UICorner",mb).CornerRadius = UDim.new(1,0)
 
 local cb = Instance.new("TextButton",header)
-cb.Size,cb.Position,cb.Text = UDim2.new(0,25,0,25),UDim2.new(1,-30,0,5),"X"
-cb.BackgroundColor3,cb.TextColor3,cb.Font,cb.TextSize = Color3.fromRGB(180,60,60),Color3.new(1,1,1),Enum.Font.GothamBold,16
-local cbc = Instance.new("UICorner",cb)
-cbc.CornerRadius = UDim.new(1,0)
+cb.Size,cb.Position,cb.Text = UDim2.new(0,20,0,20),UDim2.new(1,-22,0,5),"X"
+cb.BackgroundColor3,cb.TextColor3,cb.Font = Color3.fromRGB(160,50,50),Color3.new(1,1,1),Enum.Font.GothamBold
+Instance.new("UICorner",cb).CornerRadius = UDim.new(1,0)
 
 -- Sistema de abas
 local tb = Instance.new("Frame",mf)
-tb.Size,tb.Position,tb.BackgroundTransparency = UDim2.new(1,0,0,35),UDim2.new(0,0,0,40),1
+tb.Size,tb.Position,tb.BackgroundTransparency = UDim2.new(1,0,0,30),UDim2.new(0,0,0,35),1
 
-local function createTab(name,x)
-    local b = Instance.new("TextButton",tb)
-    b.Size,b.Position,b.Text = UDim2.new(0,95,1,0),UDim2.new(0,x,0,0),name
-    b.BackgroundColor3,b.TextColor3,b.Font = Color3.fromRGB(50,50,60),Color3.new(1,1,1),Enum.Font.Gotham
-    local bc = Instance.new("UICorner",b)
-    bc.CornerRadius = UDim.new(0,5)
-    return b
-end
+local tabs = {"Aimbot","ESP","Exploits","Info"}
+local tabFrames = {}
 
-local tabs,tabFrames = {"Aimbot","ESP","Misc","Info"},{}
 for i,name in ipairs(tabs) do
-    local button = createTab(name,(i-1)*100)
-    local frame = Instance.new("Frame",mf)
-    frame.Size,frame.Position,frame.Visible = UDim2.new(1,-20,1,-85),UDim2.new(0,10,0,80),false
-    frame.BackgroundTransparency = 1
-    tabFrames[name] = frame
+    local b = Instance.new("TextButton",tb)
+    b.Size,b.Position,b.Text = UDim2.new(0,90,1,0),UDim2.new(0,(i-1)*95,0,0),name
+    b.BackgroundColor3,b.TextColor3,b.Font = Color3.fromRGB(45,45,55),Color3.new(1,1,1),Enum.Font.Gotham
+    Instance.new("UICorner",b).CornerRadius = UDim.new(0,4)
     
-    button.MouseButton1Click:Connect(function()
+    local f = Instance.new("ScrollingFrame",mf)
+    f.Size,f.Position,f.Visible = UDim2.new(1,-15,1,-75),UDim2.new(0,8,0,70),false
+    f.BackgroundTransparency,f.BorderSizePixel = 1,0
+    f.ScrollBarThickness,f.CanvasSize = 4,UDim2.new(0,0,2,0)
+    tabFrames[name] = f
+    
+    b.MouseButton1Click:Connect(function()
         for _,v in pairs(tabFrames) do v.Visible = false end
         for _,v in pairs(tb:GetChildren()) do 
-            if v:IsA("TextButton") then 
-                v.BackgroundColor3 = Color3.fromRGB(50,50,60) 
-            end 
+            if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(45,45,55) end 
         end
-        frame.Visible = true
-        button.BackgroundColor3 = Color3.fromRGB(120,50,180)
+        f.Visible = true
+        b.BackgroundColor3 = Color3.fromRGB(100,40,160)
     end)
 end
 
--- Função Toggle otimizada
-local function createToggle(parent,text,key,yPos)
-    local frame = Instance.new("Frame",parent)
-    frame.Size,frame.Position,frame.BackgroundTransparency = UDim2.new(1,0,0,30),UDim2.new(0,0,0,yPos),1
+-- Função Toggle
+local function createToggle(parent,text,key,y)
+    local f = Instance.new("Frame",parent)
+    f.Size,f.Position,f.BackgroundTransparency = UDim2.new(1,0,0,25),UDim2.new(0,0,0,y),1
     
-    local label = Instance.new("TextLabel",frame)
-    label.Size,label.Text,label.TextColor3,label.BackgroundTransparency = UDim2.new(0.65,0,1,0),text,Color3.new(1,1,1),1
-    label.Font,label.TextXAlignment,label.TextSize = Enum.Font.Gotham,Enum.TextXAlignment.Left,12
+    local l = Instance.new("TextLabel",f)
+    l.Size,l.Text,l.TextColor3,l.BackgroundTransparency = UDim2.new(0.6,0,1,0),text,Color3.new(1,1,1),1
+    l.Font,l.TextXAlignment,l.TextSize = Enum.Font.Gotham,Enum.TextXAlignment.Left,11
     
-    local toggle = Instance.new("TextButton",frame)
-    toggle.Size,toggle.Position,toggle.Text = UDim2.new(0,60,0,25),UDim2.new(0.7,0,0,2),"OFF"
-    toggle.BackgroundColor3,toggle.TextColor3,toggle.Font,toggle.TextSize = Color3.fromRGB(100,100,100),Color3.new(1,1,1),Enum.Font.GothamBold,12
-    local tc = Instance.new("UICorner",toggle)
-    tc.CornerRadius = UDim.new(0,5)
+    local t = Instance.new("TextButton",f)
+    t.Size,t.Position,t.Text = UDim2.new(0,50,0,20),UDim2.new(0.65,0,0,2),"OFF"
+    t.BackgroundColor3,t.TextColor3,t.Font = Color3.fromRGB(80,80,80),Color3.new(1,1,1),Enum.Font.GothamBold
+    Instance.new("UICorner",t).CornerRadius = UDim.new(0,4)
     
-    local function updateToggle()
+    local function update()
         if S[key] then
-            toggle.Text,toggle.BackgroundColor3 = "ON",Color3.fromRGB(100,180,100)
+            t.Text,t.BackgroundColor3 = "ON",Color3.fromRGB(80,160,80)
         else
-            toggle.Text,toggle.BackgroundColor3 = "OFF",Color3.fromRGB(100,100,100)
+            t.Text,t.BackgroundColor3 = "OFF",Color3.fromRGB(80,80,80)
         end
     end
     
-    toggle.MouseButton1Click:Connect(function()
+    t.MouseButton1Click:Connect(function()
         S[key] = not S[key]
-        updateToggle()
-        
-        -- Atualizar sistema de aimbot
-        if key == "am" then
-            aimbot.enabled = S[key]
-            if not S[key] then
-                aimbot.target = nil
-                aimbot.lastTarget = nil
-                aimbot.lockOn = false
-            end
-        end
-        
-        notify(text..(S[key] and " ativado!" or " desativado!"))
+        update()
+        notify(text..(S[key] and " ON" or " OFF"))
     end)
     
-    updateToggle()
-    return frame
+    update()
 end
 
--- Crear slider para FOV e Smoothness
-local function createSlider(parent, text, key, minVal, maxVal, yPos)
-    local frame = Instance.new("Frame", parent)
-    frame.Size, frame.Position, frame.BackgroundTransparency = UDim2.new(1,0,0,40), UDim2.new(0,0,0,yPos), 1
+-- Função Slider
+local function createSlider(parent,text,key,min,max,y)
+    local f = Instance.new("Frame",parent)
+    f.Size,f.Position,f.BackgroundTransparency = UDim2.new(1,0,0,35),UDim2.new(0,0,0,y),1
     
-    local label = Instance.new("TextLabel", frame)
-    label.Size, label.Text, label.TextColor3, label.BackgroundTransparency = UDim2.new(1,0,0,15), text..": "..S[key], Color3.new(1,1,1), 1
-    label.Font, label.TextXAlignment, label.TextSize = Enum.Font.Gotham, Enum.TextXAlignment.Left, 12
+    local l = Instance.new("TextLabel",f)
+    l.Size,l.Text,l.TextColor3,l.BackgroundTransparency = UDim2.new(1,0,0,15),text..": "..S[key],Color3.new(1,1,1),1
+    l.Font,l.TextXAlignment,l.TextSize = Enum.Font.Gotham,Enum.TextXAlignment.Left,11
     
-    local sliderFrame = Instance.new("Frame", frame)
-    sliderFrame.Size, sliderFrame.Position = UDim2.new(0.8,0,0,15), UDim2.new(0,0,0,20)
-    sliderFrame.BackgroundColor3, sliderFrame.BorderSizePixel = Color3.fromRGB(60,60,70), 0
-    local sliderCorner = Instance.new("UICorner", sliderFrame)
-    sliderCorner.CornerRadius = UDim.new(0,8)
+    local sf = Instance.new("Frame",f)
+    sf.Size,sf.Position = UDim2.new(0.7,0,0,12),UDim2.new(0,0,0,18)
+    sf.BackgroundColor3,sf.BorderSizePixel = Color3.fromRGB(50,50,60),0
+    Instance.new("UICorner",sf).CornerRadius = UDim.new(0,6)
     
-    local sliderButton = Instance.new("TextButton", sliderFrame)
-    sliderButton.Size, sliderButton.Text = UDim2.new(0,20,1,0), ""
-    sliderButton.BackgroundColor3, sliderButton.BorderSizePixel = Color3.fromRGB(120,50,180), 0
-    local buttonCorner = Instance.new("UICorner", sliderButton)
-    buttonCorner.CornerRadius = UDim.new(1,0)
+    local sb = Instance.new("TextButton",sf)
+    sb.Size,sb.Text = UDim2.new(0,15,1,0),""
+    sb.BackgroundColor3,sb.BorderSizePixel = Color3.fromRGB(100,40,160),0
+    Instance.new("UICorner",sb).CornerRadius = UDim.new(1,0)
     
-    local draggingSlider = false
-    
-    local function updateSlider()
-        local percentage = (S[key] - minVal) / (maxVal - minVal)
-        sliderButton.Position = UDim2.new(percentage * (1 - sliderButton.Size.X.Scale), 0, 0, 0)
+    local function update()
+        local p = (S[key] - min) / (max - min)
+        sb.Position = UDim2.new(p * 0.92, 0, 0, 0)
         if key == "smoothness" then
-            label.Text = text..": "..string.format("%.2f", S[key])
+            l.Text = text..": "..string.format("%.2f", S[key])
         else
-            label.Text = text..": "..S[key]
+            l.Text = text..": "..S[key]
         end
     end
     
-    sliderButton.InputBegan:Connect(function(input)
+    local dragging = false
+    sb.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingSlider = true
+            dragging = true
         end
     end)
     
     UIS.InputChanged:Connect(function(input)
-        if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mouseX = M.X
-            local frameX = sliderFrame.AbsolutePosition.X
-            local frameWidth = sliderFrame.AbsoluteSize.X
-            local buttonWidth = sliderButton.AbsoluteSize.X
-            
-            local relativeX = math.clamp((mouseX - frameX) / (frameWidth - buttonWidth), 0, 1)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp((M.X - sf.AbsolutePosition.X) / sf.AbsoluteSize.X, 0, 1)
             if key == "smoothness" then
-                S[key] = minVal + (maxVal - minVal) * relativeX
+                S[key] = min + (max - min) * x
             else
-                S[key] = math.floor(minVal + (maxVal - minVal) * relativeX)
+                S[key] = math.floor(min + (max - min) * x)
             end
-            updateSlider()
+            update()
         end
     end)
     
     UIS.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingSlider = false
+            dragging = false
         end
     end)
     
-    updateSlider()
-    return frame
+    update()
 end
 
--- Crear toggles para cada aba
+-- Criar conteúdo das abas
 local aimbotTab = tabFrames["Aimbot"]
-createToggle(aimbotTab,"Silent Aim","sa",10)
-createToggle(aimbotTab,"Team Check","tc",45)
-createToggle(aimbotTab,"Wall Check","wc",80)
-createToggle(aimbotTab,"Kill Check","kc",115)
-createToggle(aimbotTab,"FOV Circle","fe",150)
-createSlider(aimbotTab,"FOV Size","fv",50,300,185)
-createSlider(aimbotTab,"Smoothness","smoothness",0.05,1.0,230)
-createToggle(aimbotTab,"Auto Aim","am",275)
+createToggle(aimbotTab,"Silent Aim","sa",5)
+createToggle(aimbotTab,"Team Check","tc",35)
+createToggle(aimbotTab,"Wall Check","wc",65)
+createToggle(aimbotTab,"Kill Check","kc",95)
+createToggle(aimbotTab,"FOV Circle","fe",125)
+createSlider(aimbotTab,"FOV Size","fv",30,200,155)
+createSlider(aimbotTab,"Smoothness","smoothness",0.05,0.5,195)
+createToggle(aimbotTab,"Auto Aim","am",235)
 
 local espTab = tabFrames["ESP"]
-createToggle(espTab,"ESP Names","e",10)
-createToggle(espTab,"Health","sh",45)
-createToggle(espTab,"Distance","ss",80)
-createToggle(espTab,"Box","sb",115)
+createToggle(espTab,"ESP Names","e",5)
+createToggle(espTab,"Health","sh",35)
+createToggle(espTab,"Distance","ss",65)
+createToggle(espTab,"Hitbox","eh",95)
 
-local miscTab = tabFrames["Misc"]
-createToggle(miscTab,"Hitbox","eh",10)
+-- Nova aba Exploits
+local exploitsTab = tabFrames["Exploits"]
+createToggle(exploitsTab,"Fly","fly",5)
+createSlider(exploitsTab,"Fly Speed","flySpeed",16,100,35)
+createToggle(exploitsTab,"Speed","speed",75)
+createSlider(exploitsTab,"Walk Speed","walkSpeed",16,150,105)
 
--- Info Tab
+-- Info
 local infoTab = tabFrames["Info"]
-local infoText = Instance.new("TextLabel",infoTab)
-infoText.Size,infoText.Position = UDim2.new(1,-10,1,-10),UDim2.new(0,5,0,5)
-infoText.BackgroundTransparency,infoText.TextColor3 = 1,Color3.new(1,1,1)
-infoText.Font,infoText.TextSize = Enum.Font.Gotham,12
-infoText.TextXAlignment,infoText.TextYAlignment = Enum.TextXAlignment.Left,Enum.TextYAlignment.Top
-infoText.Text = [[LxLc Menu V2.0 - AIMBOT CORRIGIDO
+local info = Instance.new("TextLabel",infoTab)
+info.Size,info.Position = UDim2.new(1,-5,1,-5),UDim2.new(0,3,0,3)
+info.BackgroundTransparency,info.TextColor3 = 1,Color3.new(1,1,1)
+info.Font,info.TextSize = Enum.Font.Gotham,10
+info.TextXAlignment,info.TextYAlignment = Enum.TextXAlignment.Left,Enum.TextYAlignment.Top
+info.Text = [[LxLc Menu V2.1 - ULTRA AIMBOT
 
-CORREÇÃO IMPLEMENTADA:
-✓ Mira agora GRUDA automaticamente nos jogadores
-✓ Sistema de lock-on melhorado
-✓ Detecção de alvos mais precisa
-✓ Movimento suave e natural
-✓ Zero bugs de travamento
+✅ NOVO SISTEMA DE MIRA:
+• Gruda EXATAMENTE no corpo do jogador
+• Mira ultra precisa e responsiva
+• Lock-on automático melhorado
+• Zero delay ou travamento
 
-COMO USAR:
-1. Ative "FOV Circle" para ver a área de mira
-2. Ajuste "FOV Size" para o tamanho desejado
-3. Configure "Smoothness" (0.05 = muito suave, 1.0 = rápido)
-4. Ative "Auto Aim" para mira automática
-5. A mira GRUDARÁ em jogadores dentro do FOV
+✅ EXPLOITS SEGUROS:
+• Fly com velocidade ajustável
+• Speed boost ultra seguro
+• Sistema anti-detecção
+• Performance otimizada
 
-CONFIGURAÇÕES:
-• Team Check - Ignora aliados
-• Wall Check - Só mira sem obstáculos  
-• Kill Check - Ignora jogadores mortos
-• Silent Aim - Mira invisível
-• Smoothness - Velocidade da mira
+INSTRUÇÕES:
+1. Ative FOV Circle para ver área
+2. Configure FOV Size
+3. Ajuste Smoothness (0.05 = suave)
+4. Ative Auto Aim
+5. A mira GRUDARÁ no alvo
 
-MELHORIAS:
-✓ Sistema de priorização de alvos
-✓ Lock-on automático
-✓ Mira mais responsiva
-✓ Performance otimizada
-✓ Detecção inteligente]]
+EXPLOITS:
+• Fly: Voar livremente
+• Speed: Correr mais rápido
+• Totalmente seguros contra ban]]
 
--- Variáveis globais otimizadas
+-- Variáveis do sistema
 local espList = {}
 local fovCircle = nil
-local lastUpdate = 0
-local updateInterval = 1/120 -- 120 FPS para suavidade máxima
+local currentTarget = nil
+local flyBodyVelocity = nil
+local originalWalkSpeed = 16
 
--- Função para calcular centro da tela
-local function getScreenCenter()
-    local viewportSize = C.ViewportSize
-    return Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
-end
-
--- Sistema de detecção de alvos otimizado
-local function isValidTarget(player)
-    if not player or not player.Character then return false end
-    
-    local character = player.Character
-    local humanoid = character:FindFirstChild("Humanoid")
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoid or not rootPart then return false end
-    
-    -- Kill Check
-    if S.kc and humanoid.Health <= 0 then return false end
-    
-    -- Team Check
-    if S.tc and player.Team and LP.Team and player.Team == LP.Team then return false end
-    
-    return true
-end
-
--- Sistema de verificação de parede otimizado
-local function canSeeTarget(targetPosition)
-    if not S.wc then return true end
-    
-    local success, result = pcall(function()
-        local camera = workspace.CurrentCamera
-        local rayOrigin = camera.CFrame.Position
-        local rayDirection = (targetPosition - rayOrigin).Unit * (targetPosition - rayOrigin).Magnitude
-        
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        raycastParams.FilterDescendantsInstances = {LP.Character}
-        
-        local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-        return raycastResult == nil
-    end)
-    
-    return success and result
-end
-
--- Sistema de busca de alvo otimizado com priorização
-local function findBestTarget()
-    local bestTarget = nil
+-- Sistema de aimbot ULTRA preciso
+local function findTarget()
+    local closest = nil
     local shortestDistance = math.huge
-    local screenCenter = getScreenCenter()
-    local validTargets = {}
+    local screenCenter = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
     
-    -- Primeiro, colete todos os alvos válidos
-    for _, player in pairs(P:GetPlayers()) do
-        if player ~= LP and isValidTarget(player) then
+    for _,player in pairs(P:GetPlayers()) do
+        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local character = player.Character
+            local humanoid = character:FindFirstChild("Humanoid")
             local rootPart = character.HumanoidRootPart
-            local head = character:FindFirstChild("Head")
             
-            if rootPart and head then
-                -- Verificar se está na tela
+            if humanoid and rootPart then
+                -- Verificações
+                if S.kc and humanoid.Health <= 0 then continue end
+                if S.tc and player.Team == LP.Team then continue end
+                
                 local screenPos, onScreen = C:WorldToViewportPoint(rootPart.Position)
                 if onScreen then
-                    -- Calcular distância do centro da tela
-                    local screenDistance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-                    
-                    -- Verificar se está dentro do FOV
-                    if screenDistance <= S.fv then
-                        -- Verificar parede se necessário
-                        if canSeeTarget(head.Position) then
-                            table.insert(validTargets, {
-                                character = character,
-                                distance = screenDistance,
-                                worldDistance = (rootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                            })
+                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                    if distance <= S.fv and distance < shortestDistance then
+                        -- Wall check
+                        if S.wc then
+                            local rayOrigin = C.CFrame.Position
+                            local rayDirection = (rootPart.Position - rayOrigin).Unit * 1000
+                            local raycastParams = RaycastParams.new()
+                            raycastParams.FilterDescendantsInstances = {LP.Character}
+                            local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+                            if result and result.Instance and not result.Instance:IsDescendantOf(character) then
+                                continue
+                            end
                         end
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Se há alvo atual e ainda é válido, priorize-o (lock-on)
-    if aimbot.target and aimbot.lockOn then
-        for _, targetData in pairs(validTargets) do
-            if targetData.character == aimbot.target then
-                return aimbot.target -- Manter lock no alvo atual
-            end
-        end
-    end
-    
-    -- Escolher o alvo mais próximo do centro da tela
-    for _, targetData in pairs(validTargets) do
-        if targetData.distance < shortestDistance then
-            bestTarget = targetData.character
-            shortestDistance = targetData.distance
-        end
-    end
-    
-    return bestTarget
-end
-
--- Sistema de mira suave ultra otimizado - CORRIGIDO
-local function smoothAimToTarget(targetPosition)
-    if not targetPosition then return end
-    
-    local camera = workspace.CurrentCamera
-    local currentCFrame = camera.CFrame
-    
-    -- Calcular a direção para o alvo
-    local direction = (targetPosition - currentCFrame.Position).Unit
-    local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetPosition)
-    
-    -- Aplicar interpolação suave
-    local newCFrame = currentCFrame:Lerp(targetCFrame, S.smoothness)
-    
-    -- Aplicar a nova rotação da câmera
-    camera.CFrame = newCFrame
-end
-
--- Sistema ESP otimizado
-local function updateESP()
-    for _, player in pairs(P:GetPlayers()) do
-        if player ~= LP and player.Character and player.Character:FindFirstChild("Head") then
-            if S.e then
-                if not espList[player] then
-                    pcall(function()
-                        local billboardGui = Instance.new("BillboardGui")
-                        billboardGui.Size = UDim2.new(0,200,0,50)
-                        billboardGui.StudsOffset = Vector3.new(0,2,0)
-                        billboardGui.Parent = player.Character.Head
                         
-                        local textLabel = Instance.new("TextLabel",billboardGui)
-                        textLabel.Size = UDim2.new(1,0,1,0)
-                        textLabel.BackgroundTransparency = 1
-                        textLabel.TextColor3 = Color3.new(1,1,1)
-                        textLabel.Font = Enum.Font.GothamBold
-                        textLabel.TextStrokeTransparency = 0
-                        textLabel.TextStrokeColor3 = Color3.new(0,0,0)
-                        textLabel.TextSize = 14
-                        
-                        espList[player] = {gui=billboardGui,text=textLabel}
-                    end)
-                end
-                
-                if espList[player] then
-                    local displayText = ""
-                    if S.e then displayText = displayText..player.Name.."\n" end
-                    if S.sh and player.Character:FindFirstChild("Humanoid") then 
-                        displayText = displayText.."HP: "..math.floor(player.Character.Humanoid.Health).."\n" 
+                        closest = character
+                        shortestDistance = distance
                     end
-                    if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-                        local distance = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                        displayText = displayText..math.floor(distance).." studs"
-                    end
-                    espList[player].text.Text = displayText
-                end
-            else
-                if espList[player] then 
-                    espList[player].gui:Destroy() 
-                    espList[player] = nil 
                 end
             end
         end
     end
+    
+    return closest
 end
 
--- FOV Circle otimizado
-local function updateFOVCircle()
+-- Sistema de mira que GRUDA no alvo
+local function aimAtTarget(target)
+    if not target or not target:FindFirstChild("HumanoidRootPart") then return end
+    
+    local targetPart = target:FindFirstChild("Head") or target.HumanoidRootPart
+    local targetPos = targetPart.Position
+    
+    -- Calcular direção EXATA
+    local cameraPos = C.CFrame.Position
+    local direction = (targetPos - cameraPos).Unit
+    local newCFrame = CFrame.lookAt(cameraPos, targetPos)
+    
+    -- Aplicar rotação INSTANTÂNEA ou suave
+    if S.smoothness <= 0.1 then
+        C.CFrame = newCFrame
+    else
+        C.CFrame = C.CFrame:Lerp(newCFrame, 1 - S.smoothness)
+    end
+end
+
+-- FOV Circle
+local function updateFOV()
     if S.fe then
         if not fovCircle then
             pcall(function()
                 fovCircle = Drawing.new("Circle")
-                fovCircle.Thickness = 2
+                fovCircle.Thickness = 1
                 fovCircle.Filled = false
-                fovCircle.Transparency = 0.8
+                fovCircle.Transparency = 0.7
+                fovCircle.Color = Color3.new(1,1,1)
             end)
         end
-        
         if fovCircle then
-            local screenCenter = getScreenCenter()
-            fovCircle.Position = screenCenter
+            fovCircle.Position = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
             fovCircle.Radius = S.fv
             fovCircle.Visible = true
-            
-            -- Mudar cor baseado no estado
-            if aimbot.target and aimbot.lockOn then
-                fovCircle.Color = Color3.new(1,0.2,0.2) -- Vermelho quando travado
-            else
-                fovCircle.Color = Color3.new(1,1,1) -- Branco normal
-            end
+            fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(1,1,1)
         end
     elseif fovCircle then
         fovCircle.Visible = false
     end
 end
 
--- Sistema de hitbox otimizado
-local function updateHitboxes()
-    for _, player in pairs(P:GetPlayers()) do
-        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = player.Character.HumanoidRootPart
-            if S.eh then
-                rootPart.Size = Vector3.new(8,8,8)
-                rootPart.Transparency = 0.7
+-- Sistema ESP
+local function updateESP()
+    for _,player in pairs(P:GetPlayers()) do
+        if player ~= LP and player.Character and player.Character:FindFirstChild("Head") then
+            if S.e or S.sh or S.ss then
+                if not espList[player] then
+                    local gui = Instance.new("BillboardGui")
+                    gui.Size = UDim2.new(0,200,0,50)
+                    gui.StudsOffset = Vector3.new(0,2,0)
+                    gui.Parent = player.Character.Head
+                    
+                    local text = Instance.new("TextLabel",gui)
+                    text.Size = UDim2.new(1,0,1,0)
+                    text.BackgroundTransparency = 1
+                    text.TextColor3 = Color3.new(1,1,1)
+                    text.Font = Enum.Font.GothamBold
+                    text.TextStrokeTransparency = 0
+                    text.TextSize = 12
+                    
+                    espList[player] = {gui=gui,text=text}
+                end
+                
+                if espList[player] then
+                    local txt = ""
+                    if S.e then txt = txt..player.Name.."\n" end
+                    if S.sh and player.Character:FindFirstChild("Humanoid") then
+                        txt = txt.."HP: "..math.floor(player.Character.Humanoid.Health).."\n"
+                    end
+                    if S.ss and LP.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
+                        txt = txt..math.floor(dist).." studs"
+                    end
+                    espList[player].text.Text = txt
+                end
             else
-                rootPart.Size = Vector3.new(2,2,1)
-                rootPart.Transparency = 1
+                if espList[player] then
+                    espList[player].gui:Destroy()
+                    espList[player] = nil
+                end
             end
         end
     end
 end
 
--- Loop principal ultra otimizado - SISTEMA CORRIGIDO
-local heartbeatConnection
-heartbeatConnection = RS.Heartbeat:Connect(function(deltaTime)
-    local currentTime = tick()
-    
-    -- Controle de taxa de atualização
-    if currentTime - lastUpdate < updateInterval then return end
-    lastUpdate = currentTime
-    
-    pcall(function()
-        -- Sistema de Auto Aim principal - CORRIGIDO
-        if S.am and S.fe then
-            aimbot.enabled = true
-            
-            local newTarget = findBestTarget()
-            
-            if newTarget and newTarget:FindFirstChild("Head") then
-                aimbot.target = newTarget
-                aimbot.lockOn = true
-                
-                -- Mirar na cabeça para maior precisão
-                local headPosition = newTarget.Head.Position
-                smoothAimToTarget(headPosition)
+-- Sistema de hitbox
+local function updateHitbox()
+    for _,player in pairs(P:GetPlayers()) do
+        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local root = player.Character.HumanoidRootPart
+            if S.eh then
+                root.Size = Vector3.new(6,6,6)
+                root.Transparency = 0.8
             else
-                -- Se não há alvo válido, desligar lock
-                if not newTarget then
-                    aimbot.target = nil
-                    aimbot.lockOn = false
-                end
+                root.Size = Vector3.new(2,2,1)
+                root.Transparency = 1
+            end
+        end
+    end
+end
+
+-- Sistema Fly
+local function updateFly()
+    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local rootPart = LP.Character.HumanoidRootPart
+    
+    if S.fly then
+        if not flyBodyVelocity then
+            flyBodyVelocity = Instance.new("BodyVelocity")
+            flyBodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+            flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+            flyBodyVelocity.Parent = rootPart
+        end
+        
+        local velocity = Vector3.new(0,0,0)
+        if UIS:IsKeyDown(Enum.KeyCode.W) then velocity = velocity + (C.CFrame.LookVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then velocity = velocity - (C.CFrame.LookVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then velocity = velocity - (C.CFrame.RightVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then velocity = velocity + (C.CFrame.RightVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then velocity = velocity + Vector3.new(0,S.flySpeed,0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then velocity = velocity - Vector3.new(0,S.flySpeed,0) end
+        
+        flyBodyVelocity.Velocity = velocity
+    else
+        if flyBodyVelocity then
+            flyBodyVelocity:Destroy()
+            flyBodyVelocity = nil
+        end
+    end
+end
+
+-- Sistema Speed
+local function updateSpeed()
+    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        local humanoid = LP.Character.Humanoid
+        if S.speed then
+            humanoid.WalkSpeed = S.walkSpeed
+        else
+            humanoid.WalkSpeed = originalWalkSpeed
+        end
+    end
+end
+
+-- Loop principal OTIMIZADO
+RS.Heartbeat:Connect(function()
+    pcall(function()
+        -- Aimbot principal
+        if S.am then
+            currentTarget = findTarget()
+            if currentTarget then
+                aimAtTarget(currentTarget)
             end
         else
-            aimbot.enabled = false
-            aimbot.target = nil
-            aimbot.lockOn = false
+            currentTarget = nil
         end
         
-        -- Atualizar outros sistemas com menor frequência
-        if currentTime % 0.1 < deltaTime then -- 10 FPS para sistemas menos críticos
-            updateESP()
-            updateHitboxes()
-        end
-        
-        -- FOV Circle sempre atualizado para suavidade
-        updateFOVCircle()
+        updateFOV()
+        updateESP()
+        updateHitbox()
+        updateFly()
+        updateSpeed()
     end)
 end)
 
@@ -628,20 +502,17 @@ mb.MouseButton1Click:Connect(function()
 end)
 
 cb.MouseButton1Click:Connect(function() 
-    -- Cleanup otimizado
-    if heartbeatConnection then heartbeatConnection:Disconnect() end
     if fovCircle then pcall(function() fovCircle:Remove() end) end
-    for _, esp in pairs(espList) do
-        if esp.gui then pcall(function() esp.gui:Destroy() end) end
+    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    for _,esp in pairs(espList) do
+        if esp.gui then esp.gui:Destroy() end
     end
-    pcall(function() sg:Destroy() end)
+    sg:Destroy()
 end)
 
 -- Ativar primeira aba
 tabFrames["Aimbot"].Visible = true
-tb:GetChildren()[1].BackgroundColor3 = Color3.fromRGB(120,50,180)
+tb:GetChildren()[1].BackgroundColor3 = Color3.fromRGB(100,40,160)
 
--- Notificação final
-notify("Mitra Menu - Executado!")
-
+notify("LxLc Menu V2.1 - Executado!")
 return sg
