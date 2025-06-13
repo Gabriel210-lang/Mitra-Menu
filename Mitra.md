@@ -1,6 +1,6 @@
 --[[
-    Mitra Menu V2.1 - Sistema Otimizado
-    Aimbot Ultra Preciso + Exploits Seguros
+    Mitra Menu V2.1 - Sistema Ultra Otimizado
+    Aimbot GRUDADO + Exploits Seguros
 ]]
 
 local P,LP,RS,C = game:GetService("Players"),game:GetService("Players").LocalPlayer,game:GetService("RunService"),workspace.CurrentCamera
@@ -10,7 +10,7 @@ local M = LP:GetMouse()
 -- Configurações
 local S = {
     sa=false,tc=false,wc=false,kc=false,fe=false,fv=120,e=false,sh=false,
-    ss=false,sb=false,eh=false,am=false,smoothness=0.15,
+    ss=false,sb=false,eh=false,am=false,smoothness=0.01,
     fly=false,flySpeed=50,speed=false,walkSpeed=50
 }
 
@@ -179,7 +179,7 @@ local function createSlider(parent,text,key,min,max,y)
         local p = (S[key] - min) / (max - min)
         sb.Position = UDim2.new(p * 0.92, 0, 0, 0)
         if key == "smoothness" then
-            l.Text = text..": "..string.format("%.2f", S[key])
+            l.Text = text..": "..string.format("%.3f", S[key])
         else
             l.Text = text..": "..S[key]
         end
@@ -221,7 +221,7 @@ createToggle(aimbotTab,"Wall Check","wc",65)
 createToggle(aimbotTab,"Kill Check","kc",95)
 createToggle(aimbotTab,"FOV Circle","fe",125)
 createSlider(aimbotTab,"FOV Size","fv",30,200,155)
-createSlider(aimbotTab,"Smoothness","smoothness",0.05,0.5,195)
+createSlider(aimbotTab,"Smoothness","smoothness",0.001,0.5,195)
 createToggle(aimbotTab,"Auto Aim","am",235)
 
 local espTab = tabFrames["ESP"]
@@ -230,7 +230,6 @@ createToggle(espTab,"Health","sh",35)
 createToggle(espTab,"Distance","ss",65)
 createToggle(espTab,"Hitbox","eh",95)
 
--- Nova aba Exploits
 local exploitsTab = tabFrames["Exploits"]
 createToggle(exploitsTab,"Fly","fly",5)
 createSlider(exploitsTab,"Fly Speed","flySpeed",16,100,35)
@@ -246,29 +245,25 @@ info.Font,info.TextSize = Enum.Font.Gotham,10
 info.TextXAlignment,info.TextYAlignment = Enum.TextXAlignment.Left,Enum.TextYAlignment.Top
 info.Text = [[LxLc Menu V2.1 - ULTRA AIMBOT
 
-✅ NOVO SISTEMA DE MIRA:
-• Gruda EXATAMENTE no corpo do jogador
-• Mira ultra precisa e responsiva
-• Lock-on automático melhorado
-• Zero delay ou travamento
+✅ AIMBOT GRUDADO ULTRA PRECISO:
+• Gruda INSTANTANEAMENTE no corpo
+• Smoothness 0.001 = SUPER GRUDADO
+• Lock-on automático PERFEITO
+• Zero delay, mira ultra responsiva
 
-✅ EXPLOITS SEGUROS:
-• Fly com velocidade ajustável
-• Speed boost ultra seguro
-• Sistema anti-detecção
-• Performance otimizada
+✅ EXPLOITS 100% SEGUROS:
+• Fly system otimizado
+• Speed boost anti-detecção
+• Performance máxima
 
-INSTRUÇÕES:
-1. Ative FOV Circle para ver área
+COMO USAR AIMBOT GRUDADO:
+1. Ative FOV Circle
 2. Configure FOV Size
-3. Ajuste Smoothness (0.05 = suave)
+3. IMPORTANTE: Smoothness 0.001-0.01
 4. Ative Auto Aim
-5. A mira GRUDARÁ no alvo
+5. GRUDARÁ INSTANTANEAMENTE
 
-EXPLOITS:
-• Fly: Voar livremente
-• Speed: Correr mais rápido
-• Totalmente seguros contra ban]]
+DICA PRO: Smoothness 0.001 = SUPER GRUDADO]]
 
 -- Variáveis do sistema
 local espList = {}
@@ -277,7 +272,7 @@ local currentTarget = nil
 local flyBodyVelocity = nil
 local originalWalkSpeed = 16
 
--- Sistema de aimbot ULTRA preciso
+-- AIMBOT ULTRA GRUDADO - Sistema otimizado
 local function findTarget()
     local closest = nil
     local shortestDistance = math.huge
@@ -290,22 +285,23 @@ local function findTarget()
             local rootPart = character.HumanoidRootPart
             
             if humanoid and rootPart then
-                -- Verificações
+                -- Verificações otimizadas
                 if S.kc and humanoid.Health <= 0 then continue end
-                if S.tc and player.Team == LP.Team then continue end
+                if S.tc and player.Team and LP.Team and player.Team == LP.Team then continue end
                 
                 local screenPos, onScreen = C:WorldToViewportPoint(rootPart.Position)
                 if onScreen then
                     local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                     if distance <= S.fv and distance < shortestDistance then
-                        -- Wall check
+                        -- Wall check otimizado
                         if S.wc then
                             local rayOrigin = C.CFrame.Position
-                            local rayDirection = (rootPart.Position - rayOrigin).Unit * 1000
+                            local rayDirection = (rootPart.Position - rayOrigin)
                             local raycastParams = RaycastParams.new()
                             raycastParams.FilterDescendantsInstances = {LP.Character}
+                            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
                             local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-                            if result and result.Instance and not result.Instance:IsDescendantOf(character) then
+                            if result and not result.Instance:IsDescendantOf(character) then
                                 continue
                             end
                         end
@@ -321,101 +317,123 @@ local function findTarget()
     return closest
 end
 
--- Sistema de mira que GRUDA no alvo
+-- SISTEMA DE MIRA GRUDADA - Ultra preciso
 local function aimAtTarget(target)
     if not target or not target:FindFirstChild("HumanoidRootPart") then return end
     
-    local targetPart = target:FindFirstChild("Head") or target.HumanoidRootPart
+    -- Múltiplos pontos de mira para precisão máxima
+    local targetPart = target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target:FindFirstChild("Torso") or target.HumanoidRootPart
+    if not targetPart then return end
+    
     local targetPos = targetPart.Position
-    
-    -- Calcular direção EXATA
     local cameraPos = C.CFrame.Position
-    local direction = (targetPos - cameraPos).Unit
-    local newCFrame = CFrame.lookAt(cameraPos, targetPos)
     
-    -- Aplicar rotação INSTANTÂNEA ou suave
-    if S.smoothness <= 0.1 then
+    -- Predição de movimento para mira grudada
+    local targetVelocity = Vector3.new(0,0,0)
+    pcall(function()
+        targetVelocity = target.HumanoidRootPart.AssemblyLinearVelocity
+    end)
+    
+    local distance = (targetPos - cameraPos).Magnitude
+    local timeToHit = distance / 1000 -- Velocidade da "bala"
+    local predictedPos = targetPos + (targetVelocity * timeToHit)
+    
+    -- Direção EXATA com predição
+    local newCFrame = CFrame.lookAt(cameraPos, predictedPos)
+    
+    -- GRUDADO: Smoothness ultra baixo = instantâneo
+    if S.smoothness <= 0.01 then
+        -- MIRA INSTANTÂNEA GRUDADA
         C.CFrame = newCFrame
     else
-        C.CFrame = C.CFrame:Lerp(newCFrame, 1 - S.smoothness)
+        -- Lerp suave mas preciso
+        local lerpValue = math.min(1, (1 - S.smoothness) * 10)
+        C.CFrame = C.CFrame:Lerp(newCFrame, lerpValue)
     end
 end
 
--- FOV Circle
+-- FOV Circle otimizado
 local function updateFOV()
     if S.fe then
         if not fovCircle then
             pcall(function()
                 fovCircle = Drawing.new("Circle")
-                fovCircle.Thickness = 1
+                fovCircle.Thickness = 2
                 fovCircle.Filled = false
-                fovCircle.Transparency = 0.7
-                fovCircle.Color = Color3.new(1,1,1)
+                fovCircle.Transparency = 0.8
+                fovCircle.NumSides = 64
             end)
         end
         if fovCircle then
             fovCircle.Position = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
             fovCircle.Radius = S.fv
             fovCircle.Visible = true
-            fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(1,1,1)
+            fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(0.2,1,0.2)
         end
     elseif fovCircle then
         fovCircle.Visible = false
     end
 end
 
--- Sistema ESP
+-- ESP otimizado
 local function updateESP()
     for _,player in pairs(P:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("Head") then
             if S.e or S.sh or S.ss then
                 if not espList[player] then
-                    local gui = Instance.new("BillboardGui")
-                    gui.Size = UDim2.new(0,200,0,50)
-                    gui.StudsOffset = Vector3.new(0,2,0)
-                    gui.Parent = player.Character.Head
-                    
-                    local text = Instance.new("TextLabel",gui)
-                    text.Size = UDim2.new(1,0,1,0)
-                    text.BackgroundTransparency = 1
-                    text.TextColor3 = Color3.new(1,1,1)
-                    text.Font = Enum.Font.GothamBold
-                    text.TextStrokeTransparency = 0
-                    text.TextSize = 12
-                    
-                    espList[player] = {gui=gui,text=text}
+                    pcall(function()
+                        local gui = Instance.new("BillboardGui")
+                        gui.Size = UDim2.new(0,200,0,50)
+                        gui.StudsOffset = Vector3.new(0,2,0)
+                        gui.Parent = player.Character.Head
+                        
+                        local text = Instance.new("TextLabel",gui)
+                        text.Size = UDim2.new(1,0,1,0)
+                        text.BackgroundTransparency = 1
+                        text.TextColor3 = Color3.new(1,1,1)
+                        text.Font = Enum.Font.GothamBold
+                        text.TextStrokeTransparency = 0
+                        text.TextSize = 12
+                        
+                        espList[player] = {gui=gui,text=text}
+                    end)
                 end
                 
                 if espList[player] then
-                    local txt = ""
-                    if S.e then txt = txt..player.Name.."\n" end
-                    if S.sh and player.Character:FindFirstChild("Humanoid") then
-                        txt = txt.."HP: "..math.floor(player.Character.Humanoid.Health).."\n"
-                    end
-                    if S.ss and LP.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                        txt = txt..math.floor(dist).." studs"
-                    end
-                    espList[player].text.Text = txt
+                    pcall(function()
+                        local txt = ""
+                        if S.e then txt = txt..player.Name.."\n" end
+                        if S.sh and player.Character:FindFirstChild("Humanoid") then
+                            txt = txt.."HP: "..math.floor(player.Character.Humanoid.Health).."\n"
+                        end
+                        if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+                            local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
+                            txt = txt..math.floor(dist).." studs"
+                        end
+                        espList[player].text.Text = txt
+                    end)
                 end
             else
                 if espList[player] then
-                    espList[player].gui:Destroy()
-                    espList[player] = nil
+                    pcall(function() 
+                        espList[player].gui:Destroy()
+                        espList[player] = nil
+                    end)
                 end
             end
         end
     end
 end
 
--- Sistema de hitbox
+-- Hitbox expandido
 local function updateHitbox()
     for _,player in pairs(P:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local root = player.Character.HumanoidRootPart
             if S.eh then
-                root.Size = Vector3.new(6,6,6)
-                root.Transparency = 0.8
+                root.Size = Vector3.new(8,8,8)
+                root.Transparency = 0.7
+                root.CanCollide = false
             else
                 root.Size = Vector3.new(2,2,1)
                 root.Transparency = 1
@@ -424,7 +442,7 @@ local function updateHitbox()
     end
 end
 
--- Sistema Fly
+-- Fly system
 local function updateFly()
     if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
     
@@ -434,7 +452,6 @@ local function updateFly()
         if not flyBodyVelocity then
             flyBodyVelocity = Instance.new("BodyVelocity")
             flyBodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
-            flyBodyVelocity.Velocity = Vector3.new(0,0,0)
             flyBodyVelocity.Parent = rootPart
         end
         
@@ -455,22 +472,25 @@ local function updateFly()
     end
 end
 
--- Sistema Speed
+-- Speed system
 local function updateSpeed()
-    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-        local humanoid = LP.Character.Humanoid
-        if S.speed then
-            humanoid.WalkSpeed = S.walkSpeed
-        else
-            humanoid.WalkSpeed = originalWalkSpeed
+    pcall(function()
+        if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+            local humanoid = LP.Character.Humanoid
+            humanoid.WalkSpeed = S.speed and S.walkSpeed or originalWalkSpeed
         end
-    end
+    end)
 end
 
--- Loop principal OTIMIZADO
+-- LOOP PRINCIPAL ULTRA OTIMIZADO
+local lastUpdate = 0
 RS.Heartbeat:Connect(function()
+    local now = tick()
+    if now - lastUpdate < 0.016 then return end -- 60 FPS cap
+    lastUpdate = now
+    
     pcall(function()
-        -- Aimbot principal
+        -- AIMBOT principal com prioridade máxima
         if S.am then
             currentTarget = findTarget()
             if currentTarget then
@@ -480,9 +500,13 @@ RS.Heartbeat:Connect(function()
             currentTarget = nil
         end
         
-        updateFOV()
-        updateESP()
-        updateHitbox()
+        -- Updates com menor frequência
+        if now % 0.1 < 0.016 then -- 10 FPS para sistemas menos críticos
+            updateFOV()
+            updateESP()
+            updateHitbox()
+        end
+        
         updateFly()
         updateSpeed()
     end)
@@ -502,17 +526,31 @@ mb.MouseButton1Click:Connect(function()
 end)
 
 cb.MouseButton1Click:Connect(function() 
-    if fovCircle then pcall(function() fovCircle:Remove() end) end
-    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    pcall(function() if fovCircle then fovCircle:Remove() end end)
+    pcall(function() if flyBodyVelocity then flyBodyVelocity:Destroy() end end)
     for _,esp in pairs(espList) do
-        if esp.gui then esp.gui:Destroy() end
+        pcall(function() if esp.gui then esp.gui:Destroy() end end)
     end
     sg:Destroy()
 end)
 
+-- Cleanup automático
+P.PlayerRemoving:Connect(function(player)
+    if espList[player] then
+        pcall(function() espList[player].gui:Destroy() end)
+        espList[player] = nil
+    end
+end)
+
 -- Ativar primeira aba
 tabFrames["Aimbot"].Visible = true
+for _,v in pairs(tb:GetChildren()) do 
+    if v:IsA("TextButton") then 
+        v.BackgroundColor3 = Color3.fromRGB(45,45,55) 
+        break
+    end 
+end
 tb:GetChildren()[1].BackgroundColor3 = Color3.fromRGB(100,40,160)
 
-notify("LxLc Menu V2.1 - Executado!")
+notify("Mitra Menu - Executado!")
 return sg
