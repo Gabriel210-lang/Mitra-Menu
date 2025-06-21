@@ -1,377 +1,283 @@
 --[[
-    Mitra Menu V2.1 - DrRay UI Library
-    Sistema Ultra Otimizado - Aimbot GRUDADO + Exploits Seguros
-    VERSÃO CORRIGIDA - Sliders funcionando + ESP auto-update
+    Mitra Menu V2.1 - RESUMIDO COM WHITELIST POR NICK
+    Sistema Ultra Otimizado - Aimbot + ESP + Exploits
 ]]
 
--- Serviços
+-- SISTEMA DE WHITELIST POR NICKNAME
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+
+-- Lista de nicknames permitidos
+local whitelist = {
+    "Gabrjvo",
+    "danizin1356", 
+    "Guilherm2584",
+    "TestUser123",
+    LocalPlayer.Name -- Para teste (remover depois)
+}
+
+-- Verificar whitelist
+local function isWhitelisted(username)
+    for _, nick in pairs(whitelist) do
+        if nick:lower() == username:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+-- Se não estiver na whitelist, mostrar aviso e parar
+if not isWhitelisted(LocalPlayer.Name) then
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "WhitelistWarning"
+    sg.Parent = game.CoreGui
+    sg.ResetOnSpawn = false
+    
+    local f = Instance.new("Frame", sg)
+    f.Size = UDim2.new(0, 450, 0, 180)
+    f.Position = UDim2.new(0.5, -225, 0, 50)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    f.BorderSizePixel = 0
+    
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10)
+    
+    -- Título
+    local title = Instance.new("TextLabel", f)
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "🚫 ACESSO NEGADO"
+    title.TextColor3 = Color3.fromRGB(255, 80, 80)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Mensagem principal
+    local msg = Instance.new("TextLabel", f)
+    msg.Size = UDim2.new(1, -20, 0, 70)
+    msg.Position = UDim2.new(0, 10, 0, 40)
+    msg.BackgroundTransparency = 1
+    msg.Text = "Você não está na lista de usuários permitidos!\nAdquira o script completo no nosso discord"
+    msg.TextColor3 = Color3.new(1, 1, 1)
+    msg.Font = Enum.Font.Gotham
+    msg.TextSize = 14
+    msg.TextWrapped = true
+    msg.TextYAlignment = Enum.TextYAlignment.Center
+    msg.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Info do usuário
+    local userInfo = Instance.new("TextLabel", f)
+    userInfo.Size = UDim2.new(1, -20, 0, 25)
+    userInfo.Position = UDim2.new(0, 10, 0, 110)
+    userInfo.BackgroundTransparency = 1
+    userInfo.Text = "Usuário atual: " .. LocalPlayer.Name
+    userInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
+    userInfo.Font = Enum.Font.Gotham
+    userInfo.TextSize = 12
+    userInfo.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Discord
+    local discord = Instance.new("TextLabel", f)
+    discord.Size = UDim2.new(1, 0, 0, 25)
+    discord.Position = UDim2.new(0, 0, 0, 135)
+    discord.BackgroundTransparency = 1
+    discord.Text = "Discord: discord.gg/mitramenu"
+    discord.TextColor3 = Color3.fromRGB(100, 150, 255)
+    discord.Font = Enum.Font.GothamBold
+    discord.TextSize = 12
+    discord.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Botão fechar
+    local close = Instance.new("TextButton", f)
+    close.Size = UDim2.new(0, 80, 0, 25)
+    close.Position = UDim2.new(1, -90, 0, 10)
+    close.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    close.Text = "X"
+    close.TextColor3 = Color3.new(1, 1, 1)
+    close.Font = Enum.Font.GothamBold
+    close.TextSize = 14
+    close.BorderSizePixel = 0
+    
+    Instance.new("UICorner", close).CornerRadius = UDim.new(0, 5)
+    
+    close.MouseButton1Click:Connect(function()
+        sg:Destroy()
+    end)
+    
+    -- Auto-close após 10 segundos
+    game:GetService("Debris"):AddItem(sg, 10)
+    
+    return -- Para o script aqui se não estiver na whitelist
+end
+
+-- SCRIPT PRINCIPAL CONTINUA (usuário autorizado)
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
 -- DrRay UI Library
 local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
 
--- Configurações (usando as mesmas variáveis do script original)
+-- Configurações
 local S = {
-    sa=false,tc=false,wc=false,kc=false,fe=false,fv=120,e=false,sh=false,
-    ss=false,sb=false,eh=false,am=false,smoothness=0.01,
-    fly=false,flySpeed=50,speed=false,walkSpeed=50
+    sa=false, tc=false, wc=false, kc=false, fe=false, fv=120,
+    e=false, sh=false, ss=false, eh=false, am=false, smoothness=0.01,
+    fly=false, flySpeed=50, speed=false, walkSpeed=50
 }
 
--- Variáveis do sistema (mantendo as originais)
-local P,LP,RS,C = Players,LocalPlayer,RunService,Camera
-local UIS,TweenS = UserInputService,TweenService
-local M = Mouse
-
--- Variáveis do aimbot e esp (originais)
+-- Variáveis globais
 local espList = {}
 local fovCircle = nil
 local currentTarget = nil
 local flyBodyVelocity = nil
 local originalWalkSpeed = 16
 
--- Sistema de notificação original
+-- Sistema de notificação
 local function notify(msg)
     local sg = Instance.new("ScreenGui")
     sg.Parent = game.CoreGui
-    local f = Instance.new("Frame",sg)
-    f.Size,f.Position = UDim2.new(0,250,0,40),UDim2.new(0.5,-125,0,20)
-    f.BackgroundColor3,f.BorderSizePixel = Color3.fromRGB(30,30,40),0
-    Instance.new("UICorner",f).CornerRadius = UDim.new(0,8)
-    local t = Instance.new("TextLabel",f)
-    t.Size,t.BackgroundTransparency = UDim2.new(1,0,1,0),1
-    t.Text,t.TextColor3,t.Font,t.TextSize = msg,Color3.new(1,1,1),Enum.Font.GothamBold,12
+    local f = Instance.new("Frame", sg)
+    f.Size = UDim2.new(0, 250, 0, 40)
+    f.Position = UDim2.new(0.5, -125, 0, 20)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(1, 0, 1, 0)
+    t.BackgroundTransparency = 1
+    t.Text = msg
+    t.TextColor3 = Color3.new(1, 1, 1)
+    t.Font = Enum.Font.GothamBold
+    t.TextSize = 12
     t.TextXAlignment = Enum.TextXAlignment.Center
-    game:GetService("Debris"):AddItem(sg,2)
+    game:GetService("Debris"):AddItem(sg, 2)
 end
 
--- Função para limpar ESP de um jogador específico
-local function cleanupPlayerESP(player)
-    if espList[player] then
-        pcall(function() 
-            if espList[player].gui then
-                espList[player].gui:Destroy()
-            end
-        end)
-        espList[player] = nil
-    end
-end
+-- Criar UI
+local window = DrRayLibrary:Load("Mitra Menu V2.1 - AUTORIZADO", "Default")
 
--- Função para limpar todo o ESP
-local function cleanupAllESP()
-    for player, data in pairs(espList) do
-        pcall(function()
-            if data.gui then
-                data.gui:Destroy()
-            end
-        end)
-    end
-    espList = {}
-end
-
--- Sistema de monitoramento de jogadores para ESP
-local function setupPlayerMonitoring()
-    -- Limpeza quando jogador sai
-    P.PlayerRemoving:Connect(function(player)
-        cleanupPlayerESP(player)
-    end)
-    
-    -- Monitor para quando jogador spawna/morre
-    P.PlayerAdded:Connect(function(player)
-        player.CharacterAdded:Connect(function(character)
-            -- Aguarda um pouco para garantir que tudo carregou
-            wait(0.5)
-            -- Força atualização do ESP
-            if espList[player] then
-                cleanupPlayerESP(player)
-            end
-        end)
-        
-        player.CharacterRemoving:Connect(function(character)
-            cleanupPlayerESP(player)
-        end)
-    end)
-    
-    -- Para jogadores já existentes
-    for _, player in pairs(P:GetPlayers()) do
-        if player ~= LP then
-            if player.Character then
-                player.CharacterAdded:Connect(function(character)
-                    wait(0.5)
-                    if espList[player] then
-                        cleanupPlayerESP(player)
-                    end
-                end)
-                
-                player.CharacterRemoving:Connect(function(character)
-                    cleanupPlayerESP(player)
-                end)
-            end
-        end
-    end
-    
-    -- Monitor para o próprio jogador (respawn)
-    LP.CharacterAdded:Connect(function(character)
-        wait(1) -- Aguarda carregar completamente
-        -- Reaplica configurações
-        updateSpeed()
-    end)
-end
-
--- Criar UI com DrRay
-local window = DrRayLibrary:Load("Mitra Menu V2.1", "Default")
-
--- Aba Início (primeira aba)
+-- Aba Início
 local inicioTab = DrRayLibrary.newTab("Início", "rbxassetid://8560362689")
-
--- Textos da aba Início
-inicioTab.newLabel("") -- Espaço
-inicioTab.newLabel("") -- Espaço
-inicioTab.newLabel("🎯 INÍCIO")
+inicioTab.newLabel("🎯 USUÁRIO AUTORIZADO")
+inicioTab.newLabel("✅ Bem-vindo: " .. LocalPlayer.Name)
 inicioTab.newLabel("")
-inicioTab.newLabel("Mitra Menu - Utilize nossas funções.")
+inicioTab.newLabel("Mitra Menu V2.1 - Sistema Ativo")
+inicioTab.newLabel("Discord: discord.gg/mitramenu")
 inicioTab.newLabel("")
-inicioTab.newLabel("Executando em: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-inicioTab.newLabel("")
-inicioTab.newLabel("Entre em nosso discord!")
-inicioTab.newLabel("https://discord.gg/mitramenu")
-inicioTab.newLabel("")
-inicioTab.newLabel("━━━━━━━━━━━━━━━━━━━━━━━━")
-inicioTab.newLabel("✅ STATUS DO SISTEMA:")
-inicioTab.newLabel("• Aimbot GRUDADO: Pronto")
-inicioTab.newLabel("• ESP Through Walls: Ativo")  
-inicioTab.newLabel("• Exploits Seguros: Online")
-inicioTab.newLabel("• Performance: Otimizada")
-inicioTab.newLabel("━━━━━━━━━━━━━━━━━━━━━━━━")
-
--- Adicionar logo no topo (header customizado)
-spawn(function()
-    wait(0.5)
-    local gui = window.gui
-    if gui then
-        local topBar = gui:FindFirstChild("TopBar") or gui:FindFirstChild("TitleBar") or gui.Frame
-        if topBar then
-            -- Logo do Mitra
-            local logo = Instance.new("ImageLabel")
-            logo.Size = UDim2.new(0, 25, 0, 25)
-            logo.Position = UDim2.new(0, 5, 0, 2)
-            logo.BackgroundTransparency = 1
-            logo.Image = "https://cdn.discordapp.com/icons/1201255095745130556/c0532b372c7bff695ecb4f6ad016258b.webp?size=2048"
-            logo.Parent = topBar
-            
-            local logoCorner = Instance.new("UICorner")
-            logoCorner.CornerRadius = UDim.new(0, 12)
-            logoCorner.Parent = logo
-        end
-        
-        -- Informações do usuário na parte inferior
-        local userFrame = Instance.new("Frame")
-        userFrame.Size = UDim2.new(1, -10, 0, 40)
-        userFrame.Position = UDim2.new(0, 5, 1, -45)
-        userFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        userFrame.BorderSizePixel = 0
-        userFrame.Parent = gui.Frame
-        
-        local userCorner = Instance.new("UICorner")
-        userCorner.CornerRadius = UDim.new(0, 6)
-        userCorner.Parent = userFrame
-        
-        -- Avatar do usuário
-        local avatarImage = Instance.new("ImageLabel")
-        avatarImage.Size = UDim2.new(0, 30, 0, 30)
-        avatarImage.Position = UDim2.new(0, 5, 0, 5)
-        avatarImage.BackgroundTransparency = 1
-        avatarImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
-        avatarImage.Parent = userFrame
-        
-        local avatarCorner = Instance.new("UICorner")
-        avatarCorner.CornerRadius = UDim.new(0, 15)
-        avatarCorner.Parent = avatarImage
-        
-        -- Nome do usuário
-        local userName = Instance.new("TextLabel")
-        userName.Size = UDim2.new(1, -45, 1, 0)
-        userName.Position = UDim2.new(0, 40, 0, 0)
-        userName.BackgroundTransparency = 1
-        userName.Text = LocalPlayer.Name
-        userName.TextColor3 = Color3.new(1, 1, 1)
-        userName.Font = Enum.Font.GothamBold
-        userName.TextSize = 12
-        userName.TextXAlignment = Enum.TextXAlignment.Left
-        userName.Parent = userFrame
-    end
-end)
+inicioTab.newLabel("STATUS: Todos os recursos liberados!")
 
 -- Aba Aimbot
 local aimbotTab = DrRayLibrary.newTab("Aimbot", "rbxassetid://8560362689")
 
-aimbotTab.newToggle("Silent Aim", "Ativa o aimbot silencioso GRUDADO", S.sa, function(state)
-    S.sa = state
-    notify("Silent Aim " .. (state and "ON" or "OFF"))
+aimbotTab.newToggle("Silent Aim", "Ativa aimbot silencioso", S.sa, function(v)
+    S.sa = v
+    notify("Silent Aim " .. (v and "ON" or "OFF"))
 end)
 
-aimbotTab.newToggle("Team Check", "Verifica equipe", S.tc, function(state)
-    S.tc = state
-    notify("Team Check " .. (state and "ON" or "OFF"))
+aimbotTab.newToggle("Team Check", "Verifica equipe", S.tc, function(v)
+    S.tc = v
+    notify("Team Check " .. (v and "ON" or "OFF"))
 end)
 
-aimbotTab.newToggle("Wall Check", "Verifica paredes", S.wc, function(state)
-    S.wc = state
-    notify("Wall Check " .. (state and "ON" or "OFF"))
+aimbotTab.newToggle("Wall Check", "Verifica paredes", S.wc, function(v)
+    S.wc = v
+    notify("Wall Check " .. (v and "ON" or "OFF"))
 end)
 
-aimbotTab.newToggle("Kill Check", "Verifica se está vivo", S.kc, function(state)
-    S.kc = state
-    notify("Kill Check " .. (state and "ON" or "OFF"))
+aimbotTab.newToggle("FOV Circle", "Círculo de mira", S.fe, function(v)
+    S.fe = v
+    notify("FOV Circle " .. (v and "ON" or "OFF"))
 end)
 
-aimbotTab.newToggle("FOV Circle", "Círculo de mira", S.fe, function(state)
-    S.fe = state
-    notify("FOV Circle " .. (state and "ON" or "OFF"))
+aimbotTab.newSlider("FOV Size", "Tamanho do FOV", 200, 30, S.fv, function(v)
+    S.fv = v
+    notify("FOV: " .. v)
 end)
 
--- CORREÇÃO: Sliders agora atualizam corretamente as variáveis
-aimbotTab.newSlider("FOV Size", "Tamanho do FOV", 200, 30, S.fv, function(value)
-    S.fv = value
-    notify("FOV Size: " .. tostring(value))
+aimbotTab.newSlider("Smoothness", "Suavidade (0.001 = GRUDADO)", 0.5, 0.001, S.smoothness, function(v)
+    S.smoothness = v
+    notify("Smoothness: " .. v)
 end)
 
-aimbotTab.newSlider("Smoothness", "Suavidade (0.001 = GRUDADO)", 0.5, 0.001, S.smoothness, function(value)
-    S.smoothness = value
-    notify("Smoothness: " .. tostring(value))
-end)
-
-aimbotTab.newToggle("Auto Aim", "AIMBOT GRUDADO ATIVO", S.am, function(state)
-    S.am = state
-    notify("Auto Aim " .. (state and "ON - GRUDADO!" or "OFF"))
+aimbotTab.newToggle("Auto Aim", "AIMBOT GRUDADO", S.am, function(v)
+    S.am = v
+    notify("Auto Aim " .. (v and "GRUDADO!" or "OFF"))
 end)
 
 -- Aba ESP
 local espTab = DrRayLibrary.newTab("ESP", "rbxassetid://8560362689")
 
-espTab.newToggle("ESP Names", "Mostra nomes", S.e, function(state)
-    S.e = state
-    notify("ESP Names " .. (state and "ON" or "OFF"))
-    if not state then
-        cleanupAllESP()
-    end
+espTab.newToggle("ESP Names", "Mostra nomes", S.e, function(v)
+    S.e = v
+    notify("ESP Names " .. (v and "ON" or "OFF"))
 end)
 
-espTab.newToggle("Show Health", "Mostra vida", S.sh, function(state)
-    S.sh = state
-    notify("Show Health " .. (state and "ON" or "OFF"))
+espTab.newToggle("Show Health", "Mostra vida", S.sh, function(v)
+    S.sh = v
+    notify("Show Health " .. (v and "ON" or "OFF"))
 end)
 
-espTab.newToggle("Show Distance", "Mostra distância", S.ss, function(state)
-    S.ss = state
-    notify("Show Distance " .. (state and "ON" or "OFF"))
-end)
-
-espTab.newToggle("Hitbox Expand", "Expande hitbox", S.eh, function(state)
-    S.eh = state
-    notify("Hitbox " .. (state and "ON" or "OFF"))
+espTab.newToggle("Show Distance", "Mostra distância", S.ss, function(v)
+    S.ss = v
+    notify("Show Distance " .. (v and "ON" or "OFF"))
 end)
 
 -- Aba Exploits
 local exploitsTab = DrRayLibrary.newTab("Exploits", "rbxassetid://8560362689")
 
-exploitsTab.newToggle("Fly", "Modo voo", S.fly, function(state)
-    S.fly = state
-    notify("Fly " .. (state and "ON" or "OFF"))
+exploitsTab.newToggle("Fly", "Modo voo", S.fly, function(v)
+    S.fly = v
+    notify("Fly " .. (v and "ON" or "OFF"))
 end)
 
--- CORREÇÃO: Slider do Fly Speed agora funciona corretamente
-exploitsTab.newSlider("Fly Speed", "Velocidade do voo", 100, 16, S.flySpeed, function(value)
-    S.flySpeed = value
-    notify("Fly Speed: " .. tostring(value))
+exploitsTab.newSlider("Fly Speed", "Velocidade do voo", 100, 16, S.flySpeed, function(v)
+    S.flySpeed = v
+    notify("Fly Speed: " .. v)
 end)
 
-exploitsTab.newToggle("Speed", "Velocidade aumentada", S.speed, function(state)
-    S.speed = state
-    notify("Speed " .. (state and "ON" or "OFF"))
+exploitsTab.newToggle("Speed", "Velocidade aumentada", S.speed, function(v)
+    S.speed = v
+    notify("Speed " .. (v and "ON" or "OFF"))
 end)
 
--- CORREÇÃO: Slider do Walk Speed agora funciona corretamente
-exploitsTab.newSlider("Walk Speed", "Velocidade de caminhada", 150, 16, S.walkSpeed, function(value)
-    S.walkSpeed = value
-    notify("Walk Speed: " .. tostring(value))
+exploitsTab.newSlider("Walk Speed", "Velocidade de caminhada", 100, 16, S.walkSpeed, function(v)
+    S.walkSpeed = v
+    notify("Walk Speed: " .. v)
 end)
 
--- Aba Info
-local infoTab = DrRayLibrary.newTab("Info", "rbxassetid://8560362689")
+-- FUNÇÕES PRINCIPAIS
 
-infoTab.newLabel("LxLc Menu V2.1 - ULTRA AIMBOT")
-infoTab.newLabel("")
-infoTab.newLabel("✅ AIMBOT GRUDADO ULTRA PRECISO:")
-infoTab.newLabel("• Gruda INSTANTANEAMENTE no corpo")
-infoTab.newLabel("• Smoothness 0.001 = SUPER GRUDADO")
-infoTab.newLabel("• Lock-on automático PERFEITO")
-infoTab.newLabel("• Zero delay, mira ultra responsiva")
-infoTab.newLabel("")
-infoTab.newLabel("✅ EXPLOITS 100% SEGUROS:")
-infoTab.newLabel("• Fly system otimizado")
-infoTab.newLabel("• Speed boost anti-detecção")
-infoTab.newLabel("• Performance máxima")
-infoTab.newLabel("")
-infoTab.newLabel("COMO USAR AIMBOT GRUDADO:")
-infoTab.newLabel("1. Ative FOV Circle")
-infoTab.newLabel("2. Configure FOV Size")
-infoTab.newLabel("3. IMPORTANTE: Smoothness 0.001-0.01")
-infoTab.newLabel("4. Ative Auto Aim")
-infoTab.newLabel("5. GRUDARÁ INSTANTANEAMENTE")
-infoTab.newLabel("")
-infoTab.newLabel("DICA PRO: Smoothness 0.001 = SUPER GRUDADO")
-infoTab.newLabel("")
-infoTab.newLabel("🔧 CORREÇÕES V2.1:")
-infoTab.newLabel("• Sliders funcionando 100%")
-infoTab.newLabel("• ESP auto-update em morte/respawn")
-infoTab.newLabel("• ESP THROUGH WALLS ativado")
-infoTab.newLabel("• Sistema anti-lag otimizado")
-infoTab.newLabel("")
-infoTab.newLabel("💬 SUPORTE:")
-infoTab.newLabel("Discord: https://discord.gg/mitramenu")
-
--- TODAS AS FUNÇÕES ORIGINAIS DO AIMBOT (mantidas exatamente iguais)
-
--- AIMBOT ULTRA GRUDADO - Sistema otimizado (FUNÇÃO ORIGINAL)
+-- Encontrar alvo
 local function findTarget()
     local closest = nil
     local shortestDistance = math.huge
-    local screenCenter = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
+    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
     
-    for _,player in pairs(P:GetPlayers()) do
-        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local character = player.Character
             local humanoid = character:FindFirstChild("Humanoid")
             local rootPart = character.HumanoidRootPart
             
             if humanoid and rootPart then
-                -- Verificações otimizadas
                 if S.kc and humanoid.Health <= 0 then continue end
-                if S.tc and player.Team and LP.Team and player.Team == LP.Team then continue end
+                if S.tc and player.Team and LocalPlayer.Team and player.Team == LocalPlayer.Team then continue end
                 
-                local screenPos, onScreen = C:WorldToViewportPoint(rootPart.Position)
+                local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
                 if onScreen then
                     local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                     if distance <= S.fv and distance < shortestDistance then
-                        -- Wall check otimizado
                         if S.wc then
-                            local rayOrigin = C.CFrame.Position
+                            local rayOrigin = Camera.CFrame.Position
                             local rayDirection = (rootPart.Position - rayOrigin)
                             local raycastParams = RaycastParams.new()
-                            raycastParams.FilterDescendantsInstances = {LP.Character}
+                            raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
                             raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
                             local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
                             if result and not result.Instance:IsDescendantOf(character) then
                                 continue
                             end
                         end
-                        
                         closest = character
                         shortestDistance = distance
                     end
@@ -379,46 +285,29 @@ local function findTarget()
             end
         end
     end
-    
     return closest
 end
 
--- SISTEMA DE MIRA GRUDADA - Ultra preciso (FUNÇÃO ORIGINAL)
+-- Mirar no alvo
 local function aimAtTarget(target)
     if not target or not target:FindFirstChild("HumanoidRootPart") then return end
     
-    -- Múltiplos pontos de mira para precisão máxima
-    local targetPart = target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target:FindFirstChild("Torso") or target.HumanoidRootPart
+    local targetPart = target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target.HumanoidRootPart
     if not targetPart then return end
     
     local targetPos = targetPart.Position
-    local cameraPos = C.CFrame.Position
+    local cameraPos = Camera.CFrame.Position
+    local newCFrame = CFrame.lookAt(cameraPos, targetPos)
     
-    -- Predição de movimento para mira grudada
-    local targetVelocity = Vector3.new(0,0,0)
-    pcall(function()
-        targetVelocity = target.HumanoidRootPart.AssemblyLinearVelocity
-    end)
-    
-    local distance = (targetPos - cameraPos).Magnitude
-    local timeToHit = distance / 1000 -- Velocidade da "bala"
-    local predictedPos = targetPos + (targetVelocity * timeToHit)
-    
-    -- Direção EXATA com predição
-    local newCFrame = CFrame.lookAt(cameraPos, predictedPos)
-    
-    -- GRUDADO: Smoothness ultra baixo = instantâneo
     if S.smoothness <= 0.01 then
-        -- MIRA INSTANTÂNEA GRUDADA
-        C.CFrame = newCFrame
+        Camera.CFrame = newCFrame
     else
-        -- Lerp suave mas preciso
         local lerpValue = math.min(1, (1 - S.smoothness) * 10)
-        C.CFrame = C.CFrame:Lerp(newCFrame, lerpValue)
+        Camera.CFrame = Camera.CFrame:Lerp(newCFrame, lerpValue)
     end
 end
 
--- FOV Circle otimizado (FUNÇÃO ORIGINAL)
+-- Atualizar FOV
 local function updateFOV()
     if S.fe then
         if not fovCircle then
@@ -431,7 +320,7 @@ local function updateFOV()
             end)
         end
         if fovCircle then
-            fovCircle.Position = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
+            fovCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
             fovCircle.Radius = S.fv
             fovCircle.Visible = true
             fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(0.2,1,0.2)
@@ -441,113 +330,71 @@ local function updateFOV()
     end
 end
 
--- ESP otimizado com sistema de auto-update + THROUGH WALLS (CORRIGIDO)
+-- Atualizar ESP
 local function updateESP()
-    for _,player in pairs(P:GetPlayers()) do
-        if player ~= LP then
-            -- Se o jogador tem character e head
-            if player.Character and player.Character:FindFirstChild("Head") then
-                if S.e or S.sh or S.ss then
-                    -- Criar ESP se não existir
-                    if not espList[player] then
-                        pcall(function()
-                            local gui = Instance.new("BillboardGui")
-                            gui.Size = UDim2.new(0,200,0,50)
-                            gui.StudsOffset = Vector3.new(0,2,0)
-                            gui.AlwaysOnTop = true -- ESP ATRAVÉS DE PAREDES
-                            gui.Parent = player.Character.Head
-                            
-                            local text = Instance.new("TextLabel",gui)
-                            text.Size = UDim2.new(1,0,1,0)
-                            text.BackgroundTransparency = 1
-                            text.TextColor3 = Color3.new(1,1,1)
-                            text.Font = Enum.Font.GothamBold
-                            text.TextStrokeTransparency = 0
-                            text.TextStrokeColor3 = Color3.new(0,0,0)
-                            text.TextSize = 12
-                            
-                            espList[player] = {gui=gui,text=text}
-                        end)
-                    end
-                    
-                    -- Atualizar texto do ESP
-                    if espList[player] and espList[player].gui.Parent then
-                        pcall(function()
-                            local txt = ""
-                            if S.e then txt = txt..player.Name.."\n" end
-                            if S.sh and player.Character:FindFirstChild("Humanoid") then
-                                txt = txt.."HP: "..math.floor(player.Character.Humanoid.Health).."\n"
-                            end
-                            if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-                                local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                                txt = txt..math.floor(dist).." studs"
-                            end
-                            espList[player].text.Text = txt
-                            
-                            -- Cor baseada na distância (opcional)
-                            if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-                                local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                                if dist < 50 then
-                                    espList[player].text.TextColor3 = Color3.new(1,0.2,0.2) -- Vermelho (perto)
-                                elseif dist < 100 then
-                                    espList[player].text.TextColor3 = Color3.new(1,1,0.2) -- Amarelo (médio)
-                                else
-                                    espList[player].text.TextColor3 = Color3.new(0.2,1,0.2) -- Verde (longe)
-                                end
-                            else
-                                espList[player].text.TextColor3 = Color3.new(1,1,1) -- Branco padrão
-                            end
-                        end)
-                    end
-                else
-                    -- Remover ESP se desabilitado
-                    cleanupPlayerESP(player)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if S.e or S.sh or S.ss then
+                if not espList[player] then
+                    pcall(function()
+                        local gui = Instance.new("BillboardGui")
+                        gui.Size = UDim2.new(0, 200, 0, 50)
+                        gui.StudsOffset = Vector3.new(0, 2, 0)
+                        gui.AlwaysOnTop = true
+                        gui.Parent = player.Character.Head
+                        
+                        local text = Instance.new("TextLabel", gui)
+                        text.Size = UDim2.new(1, 0, 1, 0)
+                        text.BackgroundTransparency = 1
+                        text.TextColor3 = Color3.new(1, 1, 1)
+                        text.Font = Enum.Font.GothamBold
+                        text.TextStrokeTransparency = 0
+                        text.TextStrokeColor3 = Color3.new(0, 0, 0)
+                        text.TextSize = 12
+                        
+                        espList[player] = {gui = gui, text = text}
+                    end)
                 end
-            else
-                -- Se jogador não tem character, limpar ESP
-                cleanupPlayerESP(player)
+                
+                if espList[player] and espList[player].gui.Parent then
+                    pcall(function()
+                        local txt = ""
+                        if S.e then txt = txt .. player.Name .. "\n" end
+                        if S.sh and player.Character:FindFirstChild("Humanoid") then
+                            txt = txt .. "HP: " .. math.floor(player.Character.Humanoid.Health) .. "\n"
+                        end
+                        if S.ss and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            local dist = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                            txt = txt .. math.floor(dist) .. " studs"
+                        end
+                        espList[player].text.Text = txt
+                    end)
+                end
             end
         end
     end
 end
 
--- Hitbox expandido (FUNÇÃO ORIGINAL)
-local function updateHitbox()
-    for _,player in pairs(P:GetPlayers()) do
-        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local root = player.Character.HumanoidRootPart
-            if S.eh then
-                root.Size = Vector3.new(8,8,8)
-                root.Transparency = 0.7
-                root.CanCollide = false
-            else
-                root.Size = Vector3.new(2,2,1)
-                root.Transparency = 1
-            end
-        end
-    end
-end
-
--- Fly system (FUNÇÃO ORIGINAL)
+-- Sistema de voo
 local function updateFly()
-    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
     
-    local rootPart = LP.Character.HumanoidRootPart
+    local rootPart = LocalPlayer.Character.HumanoidRootPart
     
     if S.fly then
         if not flyBodyVelocity then
             flyBodyVelocity = Instance.new("BodyVelocity")
-            flyBodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+            flyBodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
             flyBodyVelocity.Parent = rootPart
         end
         
-        local velocity = Vector3.new(0,0,0)
-        if UIS:IsKeyDown(Enum.KeyCode.W) then velocity = velocity + (C.CFrame.LookVector * S.flySpeed) end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then velocity = velocity - (C.CFrame.LookVector * S.flySpeed) end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then velocity = velocity - (C.CFrame.RightVector * S.flySpeed) end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then velocity = velocity + (C.CFrame.RightVector * S.flySpeed) end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then velocity = velocity + Vector3.new(0,S.flySpeed,0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then velocity = velocity - Vector3.new(0,S.flySpeed,0) end
+        local velocity = Vector3.new(0, 0, 0)
+        if UIS:IsKeyDown(Enum.KeyCode.W) then velocity = velocity + (Camera.CFrame.LookVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then velocity = velocity - (Camera.CFrame.LookVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then velocity = velocity - (Camera.CFrame.RightVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then velocity = velocity + (Camera.CFrame.RightVector * S.flySpeed) end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then velocity = velocity + Vector3.new(0, S.flySpeed, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then velocity = velocity - Vector3.new(0, S.flySpeed, 0) end
         
         flyBodyVelocity.Velocity = velocity
     else
@@ -558,28 +405,24 @@ local function updateFly()
     end
 end
 
--- Speed system (FUNÇÃO ORIGINAL)
+-- Sistema de velocidade
 local function updateSpeed()
     pcall(function()
-        if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-            local humanoid = LP.Character.Humanoid
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            local humanoid = LocalPlayer.Character.Humanoid
             humanoid.WalkSpeed = S.speed and S.walkSpeed or originalWalkSpeed
         end
     end)
 end
 
--- Inicializar sistema de monitoramento
-setupPlayerMonitoring()
-
--- LOOP PRINCIPAL ULTRA OTIMIZADO (ORIGINAL - MANTIDO EXATAMENTE IGUAL)
+-- LOOP PRINCIPAL
 local lastUpdate = 0
 RS.Heartbeat:Connect(function()
     local now = tick()
-    if now - lastUpdate < 0.016 then return end -- 60 FPS cap
+    if now - lastUpdate < 0.016 then return end
     lastUpdate = now
     
     pcall(function()
-        -- AIMBOT principal com prioridade máxima
         if S.am then
             currentTarget = findTarget()
             if currentTarget then
@@ -589,11 +432,9 @@ RS.Heartbeat:Connect(function()
             currentTarget = nil
         end
         
-        -- Updates com menor frequência
-        if now % 0.1 < 0.016 then -- 10 FPS para sistemas menos críticos
+        if now % 0.1 < 0.016 then
             updateFOV()
             updateESP()
-            updateHitbox()
         end
         
         updateFly()
@@ -601,11 +442,10 @@ RS.Heartbeat:Connect(function()
     end)
 end)
 
-notify("Mitra Menu V2.1 - AIMBOT GRUDADO Ativo!")
-print("Mitra Menu V2.1 - Sistema Ultra Otimizado carregado com sucesso!")
-print("🔧 CORREÇÕES APLICADAS:")
-print("• Sliders FOV Size, Smoothness, Fly Speed e Walk Speed agora funcionam 100%")
-print("• ESP atualiza automaticamente a cada morte, respawn, entrada e saída")
-print("• ESP THROUGH WALLS: Jogadores visíveis através de paredes")
-print("• Aba Início adicionada com informações do sistema")
-print("• Sistema anti-lag e cleanup automático implementado")
+-- Notificação de sucesso
+notify("Mitra Menu V2.1 - Carregado com sucesso!")
+notify("Usuário autorizado: " .. LocalPlayer.Name)
+
+print("🎯 Mitra Menu V2.1 - Sistema de Whitelist Ativo")
+print("✅ Usuário autorizado: " .. LocalPlayer.Name)
+print("📋 Para adicionar usuários, edite a lista 'whitelist' no código")
