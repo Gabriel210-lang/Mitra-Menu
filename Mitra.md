@@ -1,597 +1,701 @@
 --[[
-    Mitra Menu V2.1 - RESUMIDO COM WHITELIST POR NICK
-    Sistema Ultra Otimizado - Aimbot + ESP + Exploits
-    VERSÃO CORRIGIDA - Todos os erros de sintaxe foram resolvidos
+    Mitra Menu O melhor menu - Sistema de Key Temporária e Logs
+    Sistema de autenticação com keys temporárias individuais + Proteção Adonis
 ]]
 
--- SISTEMA DE WHITELIST POR NICKNAME
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Lista de nicknames permitidos
-local whitelist = {
-    "Gabrjvo",
-    "danizin1356", 
-    "Guilherm2584",
-    "TestUser123",
-    LocalPlayer.Name -- Para teste (remover depois)
-}
-
--- Verificar whitelist
-local function isWhitelisted(username)
-    for _, nick in pairs(whitelist) do
-        if string.lower(nick) == string.lower(username) then
-            return true
-        end
-    end
-    return false
-end
-
--- Se não estiver na whitelist, mostrar aviso e parar
-if not isWhitelisted(LocalPlayer.Name) then
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "WhitelistWarning"
-    sg.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    sg.ResetOnSpawn = false
-    
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, 450, 0, 180)
-    f.Position = UDim2.new(0.5, -225, 0, 50)
-    f.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    f.BorderSizePixel = 0
-    f.Parent = sg
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = f
-    
-    -- Título
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.BackgroundTransparency = 1
-    title.Text = "🚫 ACESSO NEGADO"
-    title.TextColor3 = Color3.fromRGB(255, 80, 80)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 18
-    title.TextXAlignment = Enum.TextXAlignment.Center
-    title.Parent = f
-    
-    -- Mensagem principal
-    local msg = Instance.new("TextLabel")
-    msg.Size = UDim2.new(1, -20, 0, 70)
-    msg.Position = UDim2.new(0, 10, 0, 40)
-    msg.BackgroundTransparency = 1
-    msg.Text = "Você não está na lista de usuários permitidos!\nAdquira o script completo no nosso discord"
-    msg.TextColor3 = Color3.new(1, 1, 1)
-    msg.Font = Enum.Font.Gotham
-    msg.TextSize = 14
-    msg.TextWrapped = true
-    msg.TextYAlignment = Enum.TextYAlignment.Center
-    msg.TextXAlignment = Enum.TextXAlignment.Center
-    msg.Parent = f
-    
-    -- Info do usuário
-    local userInfo = Instance.new("TextLabel")
-    userInfo.Size = UDim2.new(1, -20, 0, 25)
-    userInfo.Position = UDim2.new(0, 10, 0, 110)
-    userInfo.BackgroundTransparency = 1
-    userInfo.Text = "Usuário atual: " .. LocalPlayer.Name
-    userInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
-    userInfo.Font = Enum.Font.Gotham
-    userInfo.TextSize = 12
-    userInfo.TextXAlignment = Enum.TextXAlignment.Center
-    userInfo.Parent = f
-    
-    -- Discord
-    local discord = Instance.new("TextLabel")
-    discord.Size = UDim2.new(1, 0, 0, 25)
-    discord.Position = UDim2.new(0, 0, 0, 135)
-    discord.BackgroundTransparency = 1
-    discord.Text = "Discord: discord.gg/mitramenu"
-    discord.TextColor3 = Color3.fromRGB(100, 150, 255)
-    discord.Font = Enum.Font.GothamBold
-    discord.TextSize = 12
-    discord.TextXAlignment = Enum.TextXAlignment.Center
-    discord.Parent = f
-    
-    -- Botão fechar
-    local close = Instance.new("TextButton")
-    close.Size = UDim2.new(0, 80, 0, 25)
-    close.Position = UDim2.new(1, -90, 0, 10)
-    close.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    close.Text = "X"
-    close.TextColor3 = Color3.new(1, 1, 1)
-    close.Font = Enum.Font.GothamBold
-    close.TextSize = 14
-    close.BorderSizePixel = 0
-    close.Parent = f
-    
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 5)
-    closeCorner.Parent = close
-    
-    close.MouseButton1Click:Connect(function()
-        sg:Destroy()
-    end)
-    
-    -- Auto-close após 10 segundos
-    spawn(function()
-        wait(10)
-        if sg and sg.Parent then
-            sg:Destroy()
-        end
-    end)
-    
-    return -- Para o script aqui se não estiver na whitelist
-end
-
--- SCRIPT PRINCIPAL CONTINUA (usuário autorizado)
-local Mouse = LocalPlayer:GetMouse()
-
--- Tentar carregar DrRay UI Library com fallback
-local DrRayLibrary = nil
-local success, err = pcall(function()
-    DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
-end)
-
-if not success or not DrRayLibrary then
-    warn("Erro ao carregar DrRay Library: " .. tostring(err))
-    -- Criar interface básica como fallback
-    local fallbackUI = Instance.new("ScreenGui")
-    fallbackUI.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    fallbackUI.Name = "MitraMenuFallback"
-    
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 300, 0, 200)
-    frame.Position = UDim2.new(0.5, -150, 0.5, -100)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    frame.BorderSizePixel = 0
-    frame.Parent = fallbackUI
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = frame
-    
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 50)
-    title.BackgroundTransparency = 1
-    title.Text = "Mitra Menu V2.1 - Modo Básico"
-    title.TextColor3 = Color3.new(1, 1, 1)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 16
-    title.TextXAlignment = Enum.TextXAlignment.Center
-    title.Parent = frame
-    
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(1, -20, 1, -60)
-    statusLabel.Position = UDim2.new(0, 10, 0, 50)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = "❌ Erro ao carregar interface completa\n\nUsuário autorizado: " .. LocalPlayer.Name .. "\n\nRecarregue o script ou verifique conexão"
-    statusLabel.TextColor3 = Color3.new(1, 1, 1)
-    statusLabel.Font = Enum.Font.Gotham
-    statusLabel.TextSize = 12
-    statusLabel.TextWrapped = true
-    statusLabel.TextYAlignment = Enum.TextYAlignment.Top
-    statusLabel.Parent = frame
-    
-    return
-end
-
--- Configurações
-local Settings = {
-    silentAim = false,
-    teamCheck = false,
-    wallCheck = false,
-    killCheck = false,
-    fovEnabled = false,
-    fovSize = 120,
-    espEnabled = false,
-    showHealth = false,
-    showDistance = false,
-    espHealth = false,
-    autoAim = false,
-    smoothness = 0.01,
-    flyEnabled = false,
-    flySpeed = 50,
-    speedEnabled = false,
-    walkSpeed = 50
-}
-
--- Variáveis globais
-local espList = {}
-local fovCircle = nil
-local currentTarget = nil
-local flyBodyVelocity = nil
-local originalWalkSpeed = 16
-
--- Sistema de notificação melhorado
-local function notify(msg)
-    local sg = Instance.new("ScreenGui")
-    sg.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    sg.Name = "MitraNotification"
-    
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, 250, 0, 40)
-    f.Position = UDim2.new(0.5, -125, 0, 20)
-    f.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    f.BorderSizePixel = 0
-    f.Parent = sg
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = f
-    
-    local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, 0, 1, 0)
-    t.BackgroundTransparency = 1
-    t.Text = msg
-    t.TextColor3 = Color3.new(1, 1, 1)
-    t.Font = Enum.Font.GothamBold
-    t.TextSize = 12
-    t.TextXAlignment = Enum.TextXAlignment.Center
-    t.Parent = f
-    
-    spawn(function()
-        wait(2)
-        if sg and sg.Parent then
-            sg:Destroy()
-        end
-    end)
-end
-
--- Criar UI
-local window = DrRayLibrary:Load("Mitra Menu V2.1 - AUTORIZADO", "Default")
-
--- Aba Início
-local inicioTab = DrRayLibrary.newTab("Início", "rbxassetid://8560362689")
-inicioTab.newLabel("🎯 USUÁRIO AUTORIZADO")
-inicioTab.newLabel("✅ Bem-vindo: " .. LocalPlayer.Name)
-inicioTab.newLabel("")
-inicioTab.newLabel("Mitra Menu V2.1 - Sistema Ativo")
-inicioTab.newLabel("Discord: discord.gg/mitramenu")
-inicioTab.newLabel("")
-inicioTab.newLabel("STATUS: Todos os recursos liberados!")
-
--- Aba Aimbot
-local aimbotTab = DrRayLibrary.newTab("Aimbot", "rbxassetid://8560362689")
-
-aimbotTab.newToggle("Silent Aim", "Ativa aimbot silencioso", Settings.silentAim, function(v)
-    Settings.silentAim = v
-    notify("Silent Aim " .. (v and "ON" or "OFF"))
-end)
-
-aimbotTab.newToggle("Team Check", "Verifica equipe", Settings.teamCheck, function(v)
-    Settings.teamCheck = v
-    notify("Team Check " .. (v and "ON" or "OFF"))
-end)
-
-aimbotTab.newToggle("Wall Check", "Verifica paredes", Settings.wallCheck, function(v)
-    Settings.wallCheck = v
-    notify("Wall Check " .. (v and "ON" or "OFF"))
-end)
-
-aimbotTab.newToggle("FOV Circle", "Círculo de mira", Settings.fovEnabled, function(v)
-    Settings.fovEnabled = v
-    notify("FOV Circle " .. (v and "ON" or "OFF"))
-end)
-
-aimbotTab.newSlider("FOV Size", "Tamanho do FOV", 200, 30, Settings.fovSize, function(v)
-    Settings.fovSize = v
-    notify("FOV: " .. v)
-end)
-
-aimbotTab.newSlider("Smoothness", "Suavidade (0.001 = GRUDADO)", 0.5, 0.001, Settings.smoothness, function(v)
-    Settings.smoothness = v
-    notify("Smoothness: " .. v)
-end)
-
-aimbotTab.newToggle("Auto Aim", "AIMBOT GRUDADO", Settings.autoAim, function(v)
-    Settings.autoAim = v
-    notify("Auto Aim " .. (v and "GRUDADO!" or "OFF"))
-end)
-
--- Aba ESP
-local espTab = DrRayLibrary.newTab("ESP", "rbxassetid://8560362689")
-
-espTab.newToggle("ESP Names", "Mostra nomes", Settings.espEnabled, function(v)
-    Settings.espEnabled = v
-    notify("ESP Names " .. (v and "ON" or "OFF"))
-end)
-
-espTab.newToggle("Show Health", "Mostra vida", Settings.showHealth, function(v)
-    Settings.showHealth = v
-    notify("Show Health " .. (v and "ON" or "OFF"))
-end)
-
-espTab.newToggle("Show Distance", "Mostra distância", Settings.showDistance, function(v)
-    Settings.showDistance = v
-    notify("Show Distance " .. (v and "ON" or "OFF"))
-end)
-
--- Aba Exploits
-local exploitsTab = DrRayLibrary.newTab("Exploits", "rbxassetid://8560362689")
-
-exploitsTab.newToggle("Fly", "Modo voo", Settings.flyEnabled, function(v)
-    Settings.flyEnabled = v
-    notify("Fly " .. (v and "ON" or "OFF"))
-end)
-
-exploitsTab.newSlider("Fly Speed", "Velocidade do voo", 100, 16, Settings.flySpeed, function(v)
-    Settings.flySpeed = v
-    notify("Fly Speed: " .. v)
-end)
-
-exploitsTab.newToggle("Speed", "Velocidade aumentada", Settings.speedEnabled, function(v)
-    Settings.speedEnabled = v
-    notify("Speed " .. (v and "ON" or "OFF"))
-end)
-
-exploitsTab.newSlider("Walk Speed", "Velocidade de caminhada", 100, 16, Settings.walkSpeed, function(v)
-    Settings.walkSpeed = v
-    notify("Walk Speed: " .. v)
-end)
-
--- FUNÇÕES PRINCIPAIS
-
--- Encontrar alvo (corrigido sem continue)
-local function findTarget()
-    local closest = nil
-    local shortestDistance = math.huge
-    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local humanoid = character:FindFirstChild("Humanoid")
-            local rootPart = character.HumanoidRootPart
-            
-            if humanoid and rootPart then
-                -- Verificações de filtro (corrigido)
-                local shouldSkip = false
-                
-                if Settings.killCheck and humanoid.Health <= 0 then
-                    shouldSkip = true
-                end
-                
-                if Settings.teamCheck and player.Team and LocalPlayer.Team and player.Team == LocalPlayer.Team then
-                    shouldSkip = true
-                end
-                
-                if not shouldSkip then
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-                    if onScreen then
-                        local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-                        if distance <= Settings.fovSize and distance < shortestDistance then
-                            if Settings.wallCheck then
-                                local rayOrigin = Camera.CFrame.Position
-                                local rayDirection = (rootPart.Position - rayOrigin)
-                                local raycastParams = RaycastParams.new()
-                                raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-                                raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                                local result = Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-                                if result and not result.Instance:IsDescendantOf(character) then
-                                    shouldSkip = true
-                                end
-                            end
-                            
-                            if not shouldSkip then
-                                closest = character
-                                shortestDistance = distance
-                            end
-                        end
+-- Proteção contra Adonis Anti-Cheat
+local function protectAgainstAdonis()
+    -- Desabilitar logs do Adonis
+    local function disableAdonisLogs()
+        pcall(function()
+            if ReplicatedStorage:FindFirstChild("HDAdminClient") then
+                ReplicatedStorage.HDAdminClient:Destroy()
+            end
+        end)
+        
+        pcall(function()
+            if game:GetService("CoreGui"):FindFirstChild("RobloxGui") then
+                local RobloxGui = game:GetService("CoreGui"):FindFirstChild("RobloxGui")
+                if RobloxGui:FindFirstChild("Modules") then
+                    if RobloxGui.Modules:FindFirstChild("Server") then
+                        RobloxGui.Modules.Server:Destroy()
                     end
                 end
             end
-        end
-    end
-    return closest
-end
-
--- Mirar no alvo
-local function aimAtTarget(target)
-    if not target or not target:FindFirstChild("HumanoidRootPart") then return end
-    
-    local targetPart = target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target.HumanoidRootPart
-    if not targetPart then return end
-    
-    local targetPos = targetPart.Position
-    local cameraPos = Camera.CFrame.Position
-    local newCFrame = CFrame.lookAt(cameraPos, targetPos)
-    
-    if Settings.smoothness <= 0.01 then
-        Camera.CFrame = newCFrame
-    else
-        local lerpValue = math.min(1, (1 - Settings.smoothness) * 10)
-        Camera.CFrame = Camera.CFrame:Lerp(newCFrame, lerpValue)
-    end
-end
-
--- Atualizar FOV (corrigido com verificação Drawing)
-local function updateFOV()
-    if Settings.fovEnabled then
-        if not fovCircle and Drawing then
+        end)
+        
+        -- Bloquear principais funções de detecção do Adonis
+        for _, service in pairs({"ReplicatedStorage", "ServerStorage", "ServerScriptService"}) do
             pcall(function()
-                fovCircle = Drawing.new("Circle")
-                fovCircle.Thickness = 2
-                fovCircle.Filled = false
-                fovCircle.Transparency = 0.8
-                fovCircle.NumSides = 64
+                local svc = game:GetService(service)
+                for _, obj in pairs(svc:GetDescendants()) do
+                    if obj.Name:lower():find("adonis") or obj.Name:lower():find("hd") or obj.Name:lower():find("admin") then
+                        obj:Destroy()
+                    end
+                end
             end)
         end
-        if fovCircle then
-            fovCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-            fovCircle.Radius = Settings.fovSize
-            fovCircle.Visible = true
-            fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(0.2,1,0.2)
-        end
-    elseif fovCircle then
-        fovCircle.Visible = false
     end
-end
-
--- Atualizar ESP
-local function updateESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            if Settings.espEnabled or Settings.showHealth or Settings.showDistance then
-                if not espList[player] then
-                    pcall(function()
-                        local gui = Instance.new("BillboardGui")
-                        gui.Size = UDim2.new(0, 200, 0, 50)
-                        gui.StudsOffset = Vector3.new(0, 2, 0)
-                        gui.AlwaysOnTop = true
-                        gui.Parent = player.Character.Head
-                        
-                        local text = Instance.new("TextLabel")
-                        text.Size = UDim2.new(1, 0, 1, 0)
-                        text.BackgroundTransparency = 1
-                        text.TextColor3 = Color3.new(1, 1, 1)
-                        text.Font = Enum.Font.GothamBold
-                        text.TextStrokeTransparency = 0
-                        text.TextStrokeColor3 = Color3.new(0, 0, 0)
-                        text.TextSize = 12
-                        text.Parent = gui
-                        
-                        espList[player] = {gui = gui, text = text}
-                    end)
-                end
-                
-                if espList[player] and espList[player].gui.Parent then
-                    pcall(function()
-                        local txt = ""
-                        if Settings.espEnabled then txt = txt .. player.Name .. "\n" end
-                        if Settings.showHealth and player.Character:FindFirstChild("Humanoid") then
-                            txt = txt .. "HP: " .. math.floor(player.Character.Humanoid.Health) .. "\n"
-                        end
-                        if Settings.showDistance and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            local dist = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                            txt = txt .. math.floor(dist) .. " studs"
-                        end
-                        espList[player].text.Text = txt
-                    end)
-                end
-            else
-                -- Limpar ESP quando desabilitado
-                if espList[player] then
-                    pcall(function()
-                        if espList[player].gui then
-                            espList[player].gui:Destroy()
-                        end
-                        espList[player] = nil
-                    end)
-                end
+    
+    -- Executar proteção
+    disableAdonisLogs()
+    
+    -- Monitorar e re-executar proteção
+    spawn(function()
+        while true do
+            wait(5)
+            disableAdonisLogs()
+        end
+    end)
+    
+    -- Hook para interceptar chamadas de remote
+    local oldNamecall = getrawmetatable(game).__namecall
+    setreadonly(getrawmetatable(game), false)
+    
+    getrawmetatable(game).__namecall = function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+        if method == "FireServer" or method == "InvokeServer" then
+            if self.Name:lower():find("adonis") or self.Name:lower():find("hd") or 
+               self.Name:lower():find("admin") or self.Name:lower():find("log") then
+                return
             end
         end
+        
+        return oldNamecall(self, ...)
     end
+    
+    setreadonly(getrawmetatable(game), true)
 end
 
--- Sistema de voo
-local function updateFly()
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
-    local rootPart = LocalPlayer.Character.HumanoidRootPart
-    
-    if Settings.flyEnabled then
-        if not flyBodyVelocity then
-            flyBodyVelocity = Instance.new("BodyVelocity")
-            flyBodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-            flyBodyVelocity.Parent = rootPart
-        end
-        
-        local velocity = Vector3.new(0, 0, 0)
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then velocity = velocity + (Camera.CFrame.LookVector * Settings.flySpeed) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then velocity = velocity - (Camera.CFrame.LookVector * Settings.flySpeed) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then velocity = velocity - (Camera.CFrame.RightVector * Settings.flySpeed) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then velocity = velocity + (Camera.CFrame.RightVector * Settings.flySpeed) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then velocity = velocity + Vector3.new(0, Settings.flySpeed, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then velocity = velocity - Vector3.new(0, Settings.flySpeed, 0) end
-        
-        flyBodyVelocity.Velocity = velocity
-    else
-        if flyBodyVelocity then
-            flyBodyVelocity:Destroy()
-            flyBodyVelocity = nil
-        end
-    end
+-- Executar proteção imediatamente
+protectAgainstAdonis()
+
+-- Verificação de segurança
+if not LocalPlayer then
+    warn("Player não encontrado!")
+    return
 end
 
--- Sistema de velocidade
-local function updateSpeed()
+-- Aguardar o character carregar se necessário
+if not LocalPlayer.Character then
+    LocalPlayer.CharacterAdded:Wait()
+end
+
+-- Configuração dos webhooks Discord - WEBHOOKS ATUALIZADOS
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1386042354615587018/BObPujWmBplkndpbnm_EVEQ4mglXJtcEggocpZ7eURdi1LksOHlQE9bJprNbmHesF5l2"
+local KEY_REQUEST_WEBHOOK = "https://discord.com/api/webhooks/1386041965669388529/B6MhYOj0SjfRCEbcDFOUCjUJpiyuI5YArAdRym5EZugcB1Lh5CKm-skOhYB7mQKdI3Z0"
+
+-- Sistema de armazenamento persistente usando arquivos temporários
+local KeyStorage = {}
+local STORAGE_FILE = "MitraKeys_" .. LocalPlayer.UserId .. ".dat"
+
+-- Função para salvar dados das keys
+local function saveKeyData()
     pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            local humanoid = LocalPlayer.Character.Humanoid
-            humanoid.WalkSpeed = Settings.speedEnabled and Settings.walkSpeed or originalWalkSpeed
+        if writefile then
+            local data = HttpService:JSONEncode(KeyStorage)
+            writefile(STORAGE_FILE, data)
         end
     end)
 end
 
--- Limpar ESP quando jogador sai
-Players.PlayerRemoving:Connect(function(player)
-    if espList[player] then
-        pcall(function()
-            if espList[player].gui then
-                espList[player].gui:Destroy()
+-- Função para carregar dados das keys
+local function loadKeyData()
+    pcall(function()
+        if readfile and isfile and isfile(STORAGE_FILE) then
+            local data = readfile(STORAGE_FILE)
+            if data and data ~= "" then
+                local success, decoded = pcall(function()
+                    return HttpService:JSONDecode(data)
+                end)
+                if success and decoded then
+                    KeyStorage = decoded
+                end
             end
-            espList[player] = nil
-        end)
+        end
+    end)
+end
+
+-- Carregar dados ao iniciar
+loadKeyData()
+
+-- Função para gerar key aleatória
+local function generateRandomKey()
+    local characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local key = "MITRA-"
+    math.randomseed(tick() + LocalPlayer.UserId)
+    
+    for i = 1, 15 do -- Aumentado para 15 caracteres para mais segurança
+        local randomIndex = math.random(1, #characters)
+        key = key .. string.sub(characters, randomIndex, randomIndex)
     end
+    
+    return key
+end
+
+-- Função para verificar se a key ainda é válida
+local function isKeyValid(userId)
+    local playerData = KeyStorage[tostring(userId)]
+    if not playerData then
+        return false
+    end
+    
+    local currentTime = os.time()
+    local keyExpireTime = playerData.expireTime
+    
+    -- Se expirou, remove os dados
+    if currentTime >= keyExpireTime then
+        KeyStorage[tostring(userId)] = nil
+        saveKeyData()
+        return false
+    end
+    
+    return true
+end
+
+-- Função para obter key do jogador
+local function getPlayerKey(userId)
+    local playerData = KeyStorage[tostring(userId)]
+    if playerData and isKeyValid(userId) then
+        return playerData.key
+    end
+    return nil
+end
+
+-- Função para criar nova key para o jogador
+local function createKeyForPlayer(userId)
+    local newKey = generateRandomKey()
+    local expireTime = os.time() + (48 * 60 * 60) -- 48 horas em segundos
+    
+    KeyStorage[tostring(userId)] = {
+        key = newKey,
+        expireTime = expireTime,
+        createdTime = os.time(),
+        userId = userId -- Adicionar verificação extra de usuário
+    }
+    
+    saveKeyData() -- Salvar imediatamente
+    
+    return newKey, expireTime
+end
+
+-- Função para validar key com verificação de usuário
+local function validateKey(inputKey, userId)
+    local playerData = KeyStorage[tostring(userId)]
+    if not playerData then
+        return false, "Nenhuma key encontrada para este usuário"
+    end
+    
+    if not isKeyValid(userId) then
+        KeyStorage[tostring(userId)] = nil
+        saveKeyData()
+        return false, "Key expirada"
+    end
+    
+    if playerData.key ~= inputKey then
+        return false, "Key incorreta"
+    end
+    
+    if playerData.userId ~= userId then
+        return false, "Key não pertence a este usuário"
+    end
+    
+    return true, "Key válida"
+end
+
+-- Função para enviar log de solicitação de key
+local function sendKeyRequestLog(playerName, userId, generatedKey, expireTime)
+    spawn(function()
+        local success, errorMsg = pcall(function()
+            local playerThumbnail = "https://www.roblox.com/headshot-thumbnail/image?userId="..userId.."&width=420&height=420&format=png"
+            local durationText = "2 dias (48 horas)"
+            local expireDate = os.date("%d/%m/%Y às %H:%M:%S", expireTime)
+            
+            local embed = {
+                title = "🔑 Solicitação de Key - Mitra Menu",
+                description = "**"..playerName.."** solicitou uma key",
+                color = 3447003, -- Azul
+                thumbnail = {
+                    url = playerThumbnail
+                },
+                fields = {
+                    {
+                        name = "👤 Jogador",
+                        value = "**"..playerName.."**",
+                        inline = true
+                    },
+                    {
+                        name = "🆔 User ID",
+                        value = "**"..userId.."**",
+                        inline = true
+                    },
+                    {
+                        name = "🔑 Key",
+                        value = "```"..generatedKey.."```",
+                        inline = false
+                    },
+                    {
+                        name = "⏰ Tempo de duração",
+                        value = "**"..durationText.."**",
+                        inline = true
+                    },
+                    {
+                        name = "📅 Expira em",
+                        value = "**"..expireDate.."**",
+                        inline = true
+                    },
+                    {
+                        name = "🎮 Jogo",
+                        value = "**"..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."**",
+                        inline = false
+                    }
+                },
+                footer = {
+                    text = "Mitra Menu V2.0 - Sistema de Keys Persistentes",
+                    icon_url = playerThumbnail
+                },
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+            }
+            
+            local data = {
+                embeds = {embed}
+            }
+            
+            local jsonData = HttpService:JSONEncode(data)
+            
+            -- Função de request com proteção
+            local requestFunction = nil
+            
+            if syn and syn.request then
+                requestFunction = syn.request
+            elseif http_request then
+                requestFunction = http_request
+            elseif request then
+                requestFunction = request
+            elseif http and http.request then
+                requestFunction = http.request
+            end
+            
+            if requestFunction then
+                spawn(function()
+                    pcall(function()
+                        requestFunction({
+                            Url = KEY_REQUEST_WEBHOOK,
+                            Method = "POST",
+                            Headers = {
+                                ["Content-Type"] = "application/json"
+                            },
+                            Body = jsonData
+                        })
+                    end)
+                end)
+                print("✅ Log de solicitação de key enviado!")
+            end
+        end)
+        
+        if not success then
+            warn("❌ Erro ao enviar log de key: " .. tostring(errorMsg))
+        end
+    end)
+end
+
+-- Função para enviar logs ao Discord (uso do menu)
+local function sendDiscordLog()
+    spawn(function()
+        local success, errorMsg = pcall(function()
+            local playerThumbnail = "https://www.roblox.com/headshot-thumbnail/image?userId="..LocalPlayer.UserId.."&width=420&height=420&format=png"
+            local accountAge = LocalPlayer.AccountAge
+            local creationDate = os.date("%d/%m/%Y", os.time() - (accountAge * 24 * 60 * 60))
+            
+            local embed = {
+                title = "🎯 Mitra Menu - Novo Usuário",
+                description = "**"..LocalPlayer.Name.."** executou o **Mitra Menu**",
+                color = 7851007,
+                thumbnail = {
+                    url = playerThumbnail
+                },
+                fields = {
+                    {
+                        name = "👤 Nome do Jogador",
+                        value = "**"..LocalPlayer.Name.."**",
+                        inline = true
+                    },
+                    {
+                        name = "🆔 User ID",
+                        value = "**"..LocalPlayer.UserId.."**",
+                        inline = true
+                    },
+                    {
+                        name = "📅 Data de criação da conta",
+                        value = "**"..creationDate.."**",
+                        inline = true
+                    },
+                    {
+                        name = "🎮 Jogo Atual",
+                        value = "**"..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."**",
+                        inline = false
+                    },
+                    {
+                        name = "⏰ Horário de execução",
+                        value = "**"..os.date("%H:%M:%S - %d/%m/%Y").."**",
+                        inline = false
+                    }
+                },
+                footer = {
+                    text = "Mitra Menu V2.0 | TralhaDevScripting - Protegido",
+                    icon_url = "https://cdn.discordapp.com/emojis/1234567890123456789.png"
+                },
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+            }
+            
+            local data = {
+                embeds = {embed}
+            }
+            
+            local jsonData = HttpService:JSONEncode(data)
+            
+            local requestFunction = nil
+            
+            if syn and syn.request then
+                requestFunction = syn.request
+            elseif http_request then
+                requestFunction = http_request
+            elseif request then
+                requestFunction = request
+            elseif http and http.request then
+                requestFunction = http.request
+            end
+            
+            if requestFunction then
+                spawn(function()
+                    pcall(function()
+                        requestFunction({
+                            Url = WEBHOOK_URL,
+                            Method = "POST",
+                            Headers = {
+                                ["Content-Type"] = "application/json"
+                            },
+                            Body = jsonData
+                        })
+                    end)
+                end)
+                print("✅ Log enviado para Discord com sucesso!")
+            end
+        end)
+        
+        if not success then
+            warn("❌ Erro ao enviar log para Discord: " .. tostring(errorMsg))
+        end
+    end)
+end
+
+-- Sistema de Key
+local keyVerified = false
+local currentPlayerKey = getPlayerKey(LocalPlayer.UserId)
+
+-- Carregar interface Rayfield com proteção
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
 
--- LOOP PRINCIPAL OTIMIZADO
-local lastUpdate = 0
-local connection = RunService.Heartbeat:Connect(function()
-    local now = tick()
-    if now - lastUpdate < 0.016 then return end -- 60 FPS cap
-    lastUpdate = now
+if not success then
+    warn("❌ Erro ao carregar Rayfield interface!")
+    -- Tentar método alternativo
+    local success2, Rayfield2 = pcall(function()
+        return loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
+    end)
     
-    pcall(function()
-        if Settings.autoAim then
-            currentTarget = findTarget()
-            if currentTarget then
-                aimAtTarget(currentTarget)
+    if success2 then
+        Rayfield = Rayfield2
+    else
+        warn("❌ Não foi possível carregar nenhuma interface!")
+        return
+    end
+end
+
+-- Criar interface de verificação de key
+local KeyWindow = Rayfield:CreateWindow({
+    Name = "🔐 Mitra Menu - Sistema Protegido",
+    LoadingTitle = "Sistema de Autenticação Seguro",
+    LoadingSubtitle = "Por TralhaDevScripting - Anti-Adonis",
+    ConfigurationSaving = {
+        Enabled = false,
+        FolderName = nil,
+        FileName = "MitraMenu"
+    },
+    Discord = {
+        Enabled = false,
+        Invite = "noinvitelink",
+        RememberJoins = false
+    },
+    KeySystem = false
+})
+
+local KeyTab = KeyWindow:CreateTab("🔑 Verificação", 4483362458)
+
+-- Seção de informações
+local InfoSection = KeyTab:CreateSection("ℹ️ Sistema Persistente")
+
+local InfoLabel = KeyTab:CreateLabel("Keys válidas por 48h - Funcionam entre servidores!")
+
+-- Verificar se o jogador já tem uma key válida
+local keyStatusText = "Você não possui uma key válida"
+if currentPlayerKey and isKeyValid(LocalPlayer.UserId) then
+    local playerData = KeyStorage[tostring(LocalPlayer.UserId)]
+    local timeLeft = playerData.expireTime - os.time()
+    local hoursLeft = math.floor(timeLeft / 3600)
+    local minutesLeft = math.floor((timeLeft % 3600) / 60)
+    keyStatusText = "✅ Key ativa! Expira em: " .. hoursLeft .. "h " .. minutesLeft .. "m"
+end
+
+local StatusLabel = KeyTab:CreateLabel(keyStatusText)
+
+-- Input para key
+local keyInput = ""
+
+local KeyInput = KeyTab:CreateInput({
+    Name = "🔑 Digite a Key",
+    PlaceholderText = "Insira sua key persistente aqui...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        keyInput = Text
+        print("Key inserida: " .. Text)
+    end,
+})
+
+-- Botão Get Key
+local GetKeyButton = KeyTab:CreateButton({
+    Name = "🔗 Obter Key (48h)",
+    Callback = function()
+        -- Verificar se o jogador já tem uma key válida
+        if isKeyValid(LocalPlayer.UserId) then
+            local playerData = KeyStorage[tostring(LocalPlayer.UserId)]
+            local timeLeft = playerData.expireTime - os.time()
+            local hoursLeft = math.floor(timeLeft / 3600)
+            local minutesLeft = math.floor((timeLeft % 3600) / 60)
+            
+            Rayfield:Notify({
+                Title = "ℹ️ Key Já Ativa!",
+                Content = "Você já possui uma key válida por " .. hoursLeft .. "h " .. minutesLeft .. "m",
+                Duration = 4,
+                Image = 4483362458,
+            })
+            return
+        end
+        
+        -- Gerar nova key para o jogador
+        local newKey, expireTime = createKeyForPlayer(LocalPlayer.UserId)
+        
+        -- Enviar log para Discord
+        sendKeyRequestLog(LocalPlayer.Name, LocalPlayer.UserId, newKey, expireTime)
+        
+        -- Copiar key para clipboard
+        local clipboardSuccess = pcall(function()
+            if setclipboard then
+                setclipboard(newKey)
+                return true
+            elseif toclipboard then
+                toclipboard(newKey)
+                return true
+            end
+            return false
+        end)
+        
+        local message = "Nova key gerada! Válida por 48h em qualquer servidor."
+        if clipboardSuccess then
+            message = message .. " Key copiada!"
+        else
+            message = message .. " Key: " .. newKey
+        end
+        
+        Rayfield:Notify({
+            Title = "🔑 Key Gerada!",
+            Content = message,
+            Duration = 6,
+            Image = 4483362458,
+        })
+        
+        -- Atualizar status
+        local timeLeft = expireTime - os.time()
+        local hoursLeft = math.floor(timeLeft / 3600)
+        local minutesLeft = math.floor((timeLeft % 3600) / 60)
+        StatusLabel:Set("✅ Key ativa! Expira em: " .. hoursLeft .. "h " .. minutesLeft .. "m")
+        
+        currentPlayerKey = newKey
+    end,
+})
+
+-- Botão Verificar Key
+local VerifyButton = KeyTab:CreateButton({
+    Name = "🔍 Verificar Key",
+    Callback = function()
+        if keyInput == "" then
+            Rayfield:Notify({
+                Title = "⚠️ Aviso!",
+                Content = "Por favor, digite uma key!",
+                Duration = 3,
+                Image = 4483362458,
+            })
+            return
+        end
+        
+        -- Validar key
+        local isValid, message = validateKey(keyInput, LocalPlayer.UserId)
+        
+        if isValid then
+            Rayfield:Notify({
+                Title = "✅ Sucesso!",
+                Content = "Key verificada! Carregando menu principal...",
+                Duration = 2,
+                Image = 4483362458,
+            })
+            
+            keyVerified = true
+            
+            -- Enviar log para Discord
+            sendDiscordLog()
+            
+            -- SEÇÃO ATUALIZADA - Executar script principal após verificação
+            spawn(function()
+                wait(2) -- Aguarda a notificação
+                
+                print("🚀 Carregando Mitra Menu Protegido...")
+                
+                -- Fechar interface atual
+                pcall(function()
+                    KeyWindow:Destroy()
+                end)
+                
+                wait(0.5)
+                
+                -- Executar o script principal com proteção extra
+                local loadSuccess, loadError = pcall(function()
+                    print("📥 Baixando Mitra Menu...")
+                    
+                    -- URLs ATUALIZADAS - Nova URL principal
+                    local urls = {
+                        'https://raw.githubusercontent.com/Gabriel210-lang/Mitra-Menu/refs/heads/main/Mitra.md',
+                        'https://raw.githubusercontent.com/Gabriel210-lang/Mitra-Menu/main/Mitra.md',
+                        -- URL de backup caso a primeira falhe
+                        'https://raw.githubusercontent.com/Gabriel210-lang/Mitra-Menu/master/Mitra.md'
+                    }
+                    
+                    local scriptContent = nil
+                    for i, url in pairs(urls) do
+                        print("🔄 Tentativa " .. i .. ": " .. url)
+                        local success, content = pcall(function()
+                            return game:HttpGet(url, true)
+                        end)
+                        
+                        if success and content and #content > 50 then
+                            scriptContent = content
+                            print("✅ Script baixado com sucesso de: " .. url)
+                            break
+                        else
+                            warn("❌ Falha na tentativa " .. i .. ": " .. (content and "Conteúdo muito pequeno" or "Erro de conexão"))
+                        end
+                        
+                        wait(1) -- Aguardar entre tentativas
+                    end
+                    
+                    if scriptContent and #scriptContent > 50 then
+                        print("📥 Script baixado: " .. #scriptContent .. " caracteres")
+                        print("✅ Executando Mitra Menu Protegido...")
+                        
+                        -- Executar com proteção adicional
+                        local executeSuccess, executeError = pcall(function()
+                            -- Garantir que proteções estão ativas antes de executar
+                            protectAgainstAdonis()
+                            wait(0.5)
+                            
+                            -- EXECUTAR O SCRIPT BAIXADO
+                            loadstring(scriptContent)()
+                        end)
+                        
+                        if executeSuccess then
+                            print("🎯 Mitra Menu carregado com sucesso e protegido!")
+                        else
+                            error("Erro na execução: " .. tostring(executeError))
+                        end
+                    else
+                        error("Falha ao baixar o script de todas as fontes disponíveis")
+                    end
+                end)
+                
+                if not loadSuccess then
+                    warn("❌ Erro ao carregar Mitra Menu: " .. tostring(loadError))
+                    
+                    Rayfield:Notify({
+                        Title = "❌ Erro de Carregamento!",
+                        Content = "Falha ao carregar o menu. Verifique sua conexão e tente novamente.",
+                        Duration = 6,
+                        Image = 4483362458,
+                    })
+                end
+            end)
+            
+        else
+            Rayfield:Notify({
+                Title = "❌ Key Inválida!",
+                Content = message,
+                Duration = 4,
+                Image = 4483362458,
+            })
+        end
+    end,
+})
+
+-- Adicionar informações de segurança
+local SecuritySection = KeyTab:CreateSection("🛡️ Proteção Anti-Cheat")
+
+local SecurityLabel = KeyTab:CreateLabel("✅ Proteção Adonis: Ativa")
+
+-- Sistema de atualização automática do status
+spawn(function()
+    while not keyVerified do
+        wait(30) -- Atualizar a cada 30 segundos
+        
+        if isKeyValid(LocalPlayer.UserId) then
+            local playerData = KeyStorage[tostring(LocalPlayer.UserId)]
+            local timeLeft = playerData.expireTime - os.time()
+            local hoursLeft = math.floor(timeLeft / 3600)
+            local minutesLeft = math.floor((timeLeft % 3600) / 60)
+            
+            if timeLeft > 0 then
+                StatusLabel:Set("✅ Key ativa! Expira em: " .. hoursLeft .. "h " .. minutesLeft .. "m")
+            else
+                StatusLabel:Set("❌ Sua key expirou! Gere uma nova key.")
+                KeyStorage[tostring(LocalPlayer.UserId)] = nil
+                saveKeyData()
+                currentPlayerKey = nil
             end
         else
-            currentTarget = nil
+            StatusLabel:Set("❌ Você não possui uma key válida")
         end
         
-        -- Atualizar menos frequentemente para performance
-        if now % 0.1 < 0.016 then
-            updateFOV()
-            updateESP()
-        end
-        
-        updateFly()
-        updateSpeed()
-    end)
-end)
-
--- Limpeza quando script é recarregado
-game.Players.PlayerRemoving:Connect(function(player)
-    if player == LocalPlayer then
-        if connection then
-            connection:Disconnect()
-        end
-        if fovCircle then
-            fovCircle:Remove()
-        end
-        for _, esp in pairs(espList) do
-            if esp.gui then
-                esp.gui:Destroy()
-            end
-        end
+        -- Manter proteção ativa
+        protectAgainstAdonis()
     end
 end)
 
--- Notificações de sucesso
-notify("Mitra Menu V2.1 - Carregado com sucesso!")
-wait(0.5)
-notify("Usuário autorizado: " .. LocalPlayer.Name)
+-- Auto-salvar dados periodicamente
+spawn(function()
+    while true do
+        wait(30)
+        saveKeyData()
+    end
+end)
 
-print("🎯 Mitra Menu V2.1 - Sistema de Whitelist Ativo")
-print("✅ Usuário autorizado: " .. LocalPlayer.Name)
-print("📋 Para adicionar usuários, edite a lista 'whitelist' no código")
-print("🔧 Script corrigido - Todos os erros de sintaxe foram resolvidos")
+print("🔐 Sistema de Key Persistente + Anti-Adonis do Mitra Menu iniciado!")
+print("👤 Criador: Tralha ")
+print("🆔 User ID: Tralha ")
+print("⏰ Keys válidas por 48 horas - Persistem entre servidores")
+print("🛡️ Proteção Anti-Cheat: Ativa")
