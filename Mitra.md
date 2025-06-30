@@ -1,7 +1,7 @@
 --[[
     Mitra Menu V2.1 - DrRay UI Library
     Sistema Ultra Otimizado - Aimbot GRUDADO + Exploits Seguros
-    VERSÃO CORRIGIDA - Sliders funcionando + ESP auto-update + Novas Funções
+    VERSÃO CORRIGIDA - Sliders funcionando + ESP auto-update + Aimbot Dinâmico
 ]]
 
 -- Serviços
@@ -14,20 +14,44 @@ local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- DrRay UI Library
-local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
+-- Tentar carregar DrRay UI Library com tratamento de erro
+local DrRayLibrary = nil
+local success, result = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
+end)
+if success then
+    DrRayLibrary = result
+else
+    warn("Falha ao carregar DrRay UI Library: " .. tostring(result))
+    return -- Para a execução se a biblioteca não carregar
+end
 
 -- Configurações principais
 local S = {
-    sa=false,tc=false,wc=false,kc=false,fe=false,fv=120,e=false,sh=false,
-    ss=false,sb=false,eh=false,am=false,smoothness=0.01,
-    fly=false,flySpeed=50,speed=false,walkSpeed=50,
-    autoRob=false,autoSearch=false
+    sa = false, -- Silent Aim
+    tc = false, -- Team Check
+    wc = false, -- Wall Check
+    kc = false, -- Kill Check
+    fe = false, -- FOV Circle
+    fv = 120,   -- FOV Size
+    e = false,  -- ESP Names
+    sh = false, -- Show Health
+    ss = false, -- Show Distance
+    sb = false, -- Show Box (não usado atualmente)
+    eh = false, -- Hitbox Expand
+    am = false, -- Auto Aim
+    smoothness = 0.01, -- Suavidade do aimbot
+    fly = false, -- Fly
+    flySpeed = 50, -- Velocidade do voo
+    speed = false, -- Speed
+    walkSpeed = 50, -- Velocidade de caminhada
+    autoRob = false, -- Auto Roubar Itens
+    autoSearch = false -- Auto Revistar
 }
 
 -- Variáveis do sistema
-local P,LP,RS,C = Players,LocalPlayer,RunService,Camera
-local UIS,TweenS = UserInputService,TweenService
+local P, LP, RS, C = Players, LocalPlayer, RunService, Camera
+local UIS, TweenS = UserInputService, TweenService
 local M = Mouse
 
 -- Variáveis globais
@@ -43,21 +67,21 @@ local autoSearchLoop = nil
 local function notify(msg)
     local sg = Instance.new("ScreenGui")
     sg.Parent = game.CoreGui
-    local f = Instance.new("Frame",sg)
-    f.Size,f.Position = UDim2.new(0,250,0,40),UDim2.new(0.5,-125,0,20)
-    f.BackgroundColor3,f.BorderSizePixel = Color3.fromRGB(30,30,40),0
-    Instance.new("UICorner",f).CornerRadius = UDim.new(0,8)
-    local t = Instance.new("TextLabel",f)
-    t.Size,t.BackgroundTransparency = UDim2.new(1,0,1,0),1
-    t.Text,t.TextColor3,t.Font,t.TextSize = msg,Color3.new(1,1,1),Enum.Font.GothamBold,12
+    local f = Instance.new("Frame", sg)
+    f.Size, f.Position = UDim2.new(0, 250, 0, 40), UDim2.new(0.5, -125, 0, 20)
+    f.BackgroundColor3, f.BorderSizePixel = Color3.fromRGB(30, 30, 40), 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
+    local t = Instance.new("TextLabel", f)
+    t.Size, t.BackgroundTransparency = UDim2.new(1, 0, 1, 0), 1
+    t.Text, t.TextColor3, t.Font, t.TextSize = msg, Color3.new(1, 1, 1), Enum.Font.GothamBold, 12
     t.TextXAlignment = Enum.TextXAlignment.Center
-    game:GetService("Debris"):AddItem(sg,2)
+    game:GetService("Debris"):AddItem(sg, 2)
 end
 
 -- Função para limpar ESP
 local function cleanupPlayerESP(player)
     if espList[player] then
-        pcall(function() 
+        pcall(function()
             if espList[player].gui then
                 espList[player].gui:Destroy()
             end
@@ -85,7 +109,7 @@ local function setupPlayerMonitoring()
     
     P.PlayerAdded:Connect(function(player)
         player.CharacterAdded:Connect(function(character)
-            wait(0.5)
+            task.wait(0.5)
             if espList[player] then
                 cleanupPlayerESP(player)
             end
@@ -97,7 +121,7 @@ local function setupPlayerMonitoring()
     end)
     
     LP.CharacterAdded:Connect(function(character)
-        wait(1)
+        task.wait(1)
         updateSpeed()
     end)
 end
@@ -115,17 +139,15 @@ local function toggleAutoRob()
                 "Saco de lixo", "Peça de Arma", "Tratamento", "AR-15", "PS5", "C4", "USP", "Xbox"
             }
             
-            local args = {[1] = "mudaInv", [2] = "2", [4] = "1"}
+            local args = { [1] = "mudaInv", [2] = "2", [4] = "1" }
             
             while S.autoRob do
-                -- Deletar notificações
                 for _, gui in ipairs(PlayerGui:GetChildren()) do
                     if gui.Name == "NotifyGui" and gui:IsA("ScreenGui") then
                         gui:Destroy()
                     end
                 end
                 
-                -- Tentar pegar itens
                 for i, item in ipairs(itens) do
                     if i <= 16 and S.autoRob then
                         args[3] = item
@@ -158,7 +180,7 @@ local function toggleAutoSearch()
     if S.autoSearch then
         autoSearchLoop = task.spawn(function()
             local RS = ReplicatedStorage:WaitForChild("RemoteNovos")
-            local dsada = RS:WaitForChild("bixobrabo")
+            local dsada = RS:WaitForChild("b6173c3a-0f6d-4f0f-9f0b-7e6b7e6b7e6b")
             local DETECTION_RADIUS = 10
             local CheckInterval = 0.5
             local detectados = {}
@@ -210,14 +232,13 @@ end
 -- FLY + BYPASS
 local function createFlySystem()
     local flyEnabled = false
-    local speed = 50
     local moveVector = Vector3.new()
     
     local function updateMoveVector()
         local cam = workspace.CurrentCamera
         local look = cam.CFrame.LookVector
         local right = cam.CFrame.RightVector
-        local up = Vector3.new(0,1,0)
+        local up = Vector3.new(0, 1, 0)
         
         local forward = 0
         local rightVal = 0
@@ -238,15 +259,18 @@ local function createFlySystem()
     flyEnabled = S.fly
     
     if flyEnabled then
-        -- Bypass dano de queda
         pcall(function()
             if LP.Character:FindFirstChild("DanoQueda") then
                 LP.Character:FindFirstChild("DanoQueda"):Destroy()
             end
         end)
         
-        RS.RenderStepped:Connect(function()
-            if not flyEnabled or not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+        local connection
+        connection = RS.RenderStepped:Connect(function()
+            if not flyEnabled or not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then
+                if connection then connection:Disconnect() end
+                return
+            end
             
             local character = LP.Character
             local humanoid = character:FindFirstChild("Humanoid")
@@ -256,7 +280,7 @@ local function createFlySystem()
                 updateMoveVector()
                 local cam = workspace.CurrentCamera
                 local _, y, _ = cam.CFrame.Rotation:ToEulerAnglesYXZ()
-                rootPart.CFrame = CFrame.new(rootPart.Position) * CFrame.Angles(0,y,0)
+                rootPart.CFrame = CFrame.new(rootPart.Position) * CFrame.Angles(0, y, 0)
                 rootPart.AssemblyLinearVelocity = moveVector * S.flySpeed
                 if humanoid.AutoRotate then
                     humanoid.AutoRotate = false
@@ -286,7 +310,7 @@ inicioTab.newLabel("")
 inicioTab.newLabel("━━━━━━━━━━━━━━━━━━━━━━━━")
 inicioTab.newLabel("✅ STATUS DO SISTEMA:")
 inicioTab.newLabel("• Aimbot GRUDADO: Pronto")
-inicioTab.newLabel("• ESP Through Walls: Ativo")  
+inicioTab.newLabel("• ESP Through Walls: Ativo")
 inicioTab.newLabel("• Exploits Seguros: Online")
 inicioTab.newLabel("• Auto Systems: Disponível")
 inicioTab.newLabel("━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -388,13 +412,13 @@ exploitsTab.newButton("Auto Revistar", "Revista mortos automaticamente", functio
     toggleAutoSearch()
 end)
 
--- FUNÇÕES DO AIMBOT (mantidas originais)
+-- FUNÇÕES DO AIMBOT (corrigidas)
 local function findTarget()
     local closest = nil
     local shortestDistance = math.huge
-    local screenCenter = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
+    local screenCenter = Vector2.new(C.ViewportSize.X / 2, C.ViewportSize.Y / 2)
     
-    for _,player in pairs(P:GetPlayers()) do
+    for _, player in pairs(P:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local character = player.Character
             local humanoid = character:FindFirstChild("Humanoid")
@@ -410,7 +434,7 @@ local function findTarget()
                     if distance <= S.fv and distance < shortestDistance then
                         if S.wc then
                             local rayOrigin = C.CFrame.Position
-                            local rayDirection = (rootPart.Position - rayOrigin)
+                            local rayDirection = (rootPart.Position - rayOrigin).Unit * 1000
                             local raycastParams = RaycastParams.new()
                             raycastParams.FilterDescendantsInstances = {LP.Character}
                             raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -440,7 +464,7 @@ local function aimAtTarget(target)
     local targetPos = targetPart.Position
     local cameraPos = C.CFrame.Position
     
-    local targetVelocity = Vector3.new(0,0,0)
+    local targetVelocity = Vector3.new(0, 0, 0)
     pcall(function()
         targetVelocity = target.HumanoidRootPart.AssemblyLinearVelocity
     end)
@@ -449,12 +473,12 @@ local function aimAtTarget(target)
     local timeToHit = distance / 1000
     local predictedPos = targetPos + (targetVelocity * timeToHit)
     
-    local newCFrame = CFrame.lookAt(cameraPos, predictedPos)
+    local newCFrame = CFrame.new(cameraPos, predictedPos)
     
-    if S.smoothness <= 0.01 then
+    if S.smoothness <= 0.001 then
         C.CFrame = newCFrame
     else
-        local lerpValue = math.min(1, (1 - S.smoothness) * 10)
+        local lerpValue = math.clamp(1 - (S.smoothness * 10), 0.1, 1)
         C.CFrame = C.CFrame:Lerp(newCFrame, lerpValue)
     end
 end
@@ -471,10 +495,10 @@ local function updateFOV()
             end)
         end
         if fovCircle then
-            fovCircle.Position = Vector2.new(C.ViewportSize.X/2, C.ViewportSize.Y/2)
+            fovCircle.Position = Vector2.new(C.ViewportSize.X / 2, C.ViewportSize.Y / 2)
             fovCircle.Radius = S.fv
             fovCircle.Visible = true
-            fovCircle.Color = currentTarget and Color3.new(1,0.2,0.2) or Color3.new(0.2,1,0.2)
+            fovCircle.Color = currentTarget and Color3.new(1, 0.2, 0.2) or Color3.new(0.2, 1, 0.2)
         end
     elseif fovCircle then
         fovCircle.Visible = false
@@ -482,55 +506,55 @@ local function updateFOV()
 end
 
 local function updateESP()
-    for _,player in pairs(P:GetPlayers()) do
+    for _, player in pairs(P:GetPlayers()) do
         if player ~= LP then
             if player.Character and player.Character:FindFirstChild("Head") then
                 if S.e or S.sh or S.ss then
                     if not espList[player] then
                         pcall(function()
                             local gui = Instance.new("BillboardGui")
-                            gui.Size = UDim2.new(0,200,0,50)
-                            gui.StudsOffset = Vector3.new(0,2,0)
+                            gui.Size = UDim2.new(0, 200, 0, 50)
+                            gui.StudsOffset = Vector3.new(0, 2, 0)
                             gui.AlwaysOnTop = true
                             gui.Parent = player.Character.Head
                             
-                            local text = Instance.new("TextLabel",gui)
-                            text.Size = UDim2.new(1,0,1,0)
+                            local text = Instance.new("TextLabel", gui)
+                            text.Size = UDim2.new(1, 0, 1, 0)
                             text.BackgroundTransparency = 1
-                            text.TextColor3 = Color3.new(1,1,1)
+                            text.TextColor3 = Color3.new(1, 1, 1)
                             text.Font = Enum.Font.GothamBold
                             text.TextStrokeTransparency = 0
-                            text.TextStrokeColor3 = Color3.new(0,0,0)
+                            text.TextStrokeColor3 = Color3.new(0, 0, 0)
                             text.TextSize = 12
                             
-                            espList[player] = {gui=gui,text=text}
+                            espList[player] = { gui = gui, text = text }
                         end)
                     end
                     
                     if espList[player] and espList[player].gui.Parent then
                         pcall(function()
                             local txt = ""
-                            if S.e then txt = txt..player.Name.."\n" end
+                            if S.e then txt = txt .. player.Name .. "\n" end
                             if S.sh and player.Character:FindFirstChild("Humanoid") then
-                                txt = txt.."HP: "..math.floor(player.Character.Humanoid.Health).."\n"
+                                txt = txt .. "HP: " .. math.floor(player.Character.Humanoid.Health) .. "\n"
                             end
                             if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
                                 local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
-                                txt = txt..math.floor(dist).." studs"
+                                txt = txt .. math.floor(dist) .. " studs"
                             end
                             espList[player].text.Text = txt
                             
                             if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
                                 local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
                                 if dist < 50 then
-                                    espList[player].text.TextColor3 = Color3.new(1,0.2,0.2)
+                                    espList[player].text.TextColor3 = Color3.new(1, 0.2, 0.2)
                                 elseif dist < 100 then
-                                    espList[player].text.TextColor3 = Color3.new(1,1,0.2)
+                                    espList[player].text.TextColor3 = Color3.new(1, 1, 0.2)
                                 else
-                                    espList[player].text.TextColor3 = Color3.new(0.2,1,0.2)
+                                    espList[player].text.TextColor3 = Color3.new(0.2, 1, 0.2)
                                 end
                             else
-                                espList[player].text.TextColor3 = Color3.new(1,1,1)
+                                espList[player].text.TextColor3 = Color3.new(1, 1, 1)
                             end
                         end)
                     end
@@ -545,15 +569,15 @@ local function updateESP()
 end
 
 local function updateHitbox()
-    for _,player in pairs(P:GetPlayers()) do
+    for _, player in pairs(P:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local root = player.Character.HumanoidRootPart
             if S.eh then
-                root.Size = Vector3.new(8,8,8)
+                root.Size = Vector3.new(8, 8, 8)
                 root.Transparency = 0.7
                 root.CanCollide = false
             else
-                root.Size = Vector3.new(2,2,1)
+                root.Size = Vector3.new(2, 2, 1)
                 root.Transparency = 1
             end
         end
@@ -574,7 +598,7 @@ setupPlayerMonitoring()
 
 -- LOOP PRINCIPAL
 local lastUpdate = 0
-RS.Heartbeat:Connect(function()
+RS.Heartbeat:Connect(function(deltaTime)
     local now = tick()
     if now - lastUpdate < 0.016 then return end
     lastUpdate = now
@@ -584,6 +608,8 @@ RS.Heartbeat:Connect(function()
             currentTarget = findTarget()
             if currentTarget then
                 aimAtTarget(currentTarget)
+            else
+                currentTarget = nil
             end
         else
             currentTarget = nil
