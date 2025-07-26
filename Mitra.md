@@ -1,7 +1,7 @@
 --[[
     Mitra Menu V2.1 - DrRay UI Library
     Sistema Ultra Otimizado - Aimbot GRUDADO + Exploits Seguros
-    VERSÃO CORRIGIDA - Sliders funcionando + ESP auto-update + Aimbot Dinâmico
+    VERSÃO CORRIGIDA - Aimbot Atualizado + ESP auto-update
 ]]
 
 -- Serviços
@@ -14,7 +14,7 @@ local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Tentar carregar DrRay UI Library com tratamento de erro
+-- Tentar carregar DrRay UI Library
 local DrRayLibrary = nil
 local success, result = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
@@ -23,30 +23,12 @@ if success then
     DrRayLibrary = result
 else
     warn("Falha ao carregar DrRay UI Library: " .. tostring(result))
-    return -- Para a execução se a biblioteca não carregar
+    return
 end
 
 -- Configurações principais
 local S = {
-    sa = false, -- Silent Aim
-    tc = false, -- Team Check
-    wc = false, -- Wall Check
-    kc = false, -- Kill Check
-    fe = false, -- FOV Circle
-    fv = 120,   -- FOV Size
-    e = false,  -- ESP Names
-    sh = false, -- Show Health
-    ss = false, -- Show Distance
-    sb = false, -- Show Box (não usado atualmente)
-    eh = false, -- Hitbox Expand
-    am = false, -- Auto Aim
-    smoothness = 0.01, -- Suavidade do aimbot
-    fly = false, -- Fly
-    flySpeed = 50, -- Velocidade do voo
-    speed = false, -- Speed
-    walkSpeed = 50, -- Velocidade de caminhada
-    autoRob = false, -- Auto Roubar Itens
-    autoSearch = false -- Auto Revistar
+    sa = false, tc = false, wc = false, kc = false, fe = false, fv = 120, e = false, sh = false, ss = false, sb = false, eh = false, am = false, smoothness = 0.01, fly = false, flySpeed = 50, speed = false, walkSpeed = 50, autoRob = false, autoSearch = false
 }
 
 -- Variáveis do sistema
@@ -62,6 +44,7 @@ local flyBodyVelocity = nil
 local originalWalkSpeed = 16
 local autoRobLoop = nil
 local autoSearchLoop = nil
+local aimbotConnection = nil
 
 -- Sistema de notificação
 local function notify(msg)
@@ -82,9 +65,7 @@ end
 local function cleanupPlayerESP(player)
     if espList[player] then
         pcall(function()
-            if espList[player].gui then
-                espList[player].gui:Destroy()
-            end
+            if espList[player].gui then espList[player].gui:Destroy() end
         end)
         espList[player] = nil
     end
@@ -93,9 +74,7 @@ end
 local function cleanupAllESP()
     for player, data in pairs(espList) do
         pcall(function()
-            if data.gui then
-                data.gui:Destroy()
-            end
+            if data.gui then data.gui:Destroy() end
         end)
     end
     espList = {}
@@ -103,23 +82,14 @@ end
 
 -- Sistema de monitoramento de jogadores
 local function setupPlayerMonitoring()
-    P.PlayerRemoving:Connect(function(player)
-        cleanupPlayerESP(player)
-    end)
-    
+    P.PlayerRemoving:Connect(function(player) cleanupPlayerESP(player) end)
     P.PlayerAdded:Connect(function(player)
         player.CharacterAdded:Connect(function(character)
             task.wait(0.5)
-            if espList[player] then
-                cleanupPlayerESP(player)
-            end
+            if espList[player] then cleanupPlayerESP(player) end
         end)
-        
-        player.CharacterRemoving:Connect(function(character)
-            cleanupPlayerESP(player)
-        end)
+        player.CharacterRemoving:Connect(function(character) cleanupPlayerESP(player) end)
     end)
-    
     LP.CharacterAdded:Connect(function(character)
         task.wait(1)
         updateSpeed()
@@ -129,36 +99,22 @@ end
 -- AUTO ROUBAR ITENS
 local function toggleAutoRob()
     S.autoRob = not S.autoRob
-    
     if S.autoRob then
         autoRobLoop = task.spawn(function()
             local PlayerGui = LP:WaitForChild("PlayerGui")
-            local itens = {
-                "AK47", "Uzi", "PARAFAL", "Glock 17", "Faca", "IA2", "G3", "Dinamite",
-                "Hi Power", "Natalina", "HK416", "Lockpick", "Escudo", "Skate", 
-                "Saco de lixo", "Peça de Arma", "Tratamento", "AR-15", "PS5", "C4", "USP", "Xbox"
-            }
-            
+            local itens = {"AK47", "Uzi", "PARAFAL", "Glock 17", "Faca", "IA2", "G3", "Dinamite", "Hi Power", "Natalina", "HK416", "Lockpick", "Escudo", "Skate", "Saco de lixo", "Peça de Arma", "Tratamento", "AR-15", "PS5", "C4", "USP", "Xbox"}
             local args = { [1] = "mudaInv", [2] = "2", [4] = "1" }
-            
             while S.autoRob do
                 for _, gui in ipairs(PlayerGui:GetChildren()) do
-                    if gui.Name == "NotifyGui" and gui:IsA("ScreenGui") then
-                        gui:Destroy()
-                    end
+                    if gui.Name == "NotifyGui" and gui:IsA("ScreenGui") then gui:Destroy() end
                 end
-                
                 for i, item in ipairs(itens) do
                     if i <= 16 and S.autoRob then
                         args[3] = item
                         args[2] = tostring(i)
-                        
                         task.spawn(function()
                             pcall(function()
-                                ReplicatedStorage:WaitForChild("Modules")
-                                    :WaitForChild("InvRemotes")
-                                    :WaitForChild("InvRequest")
-                                    :InvokeServer(unpack(args))
+                                ReplicatedStorage:WaitForChild("Modules"):WaitForChild("InvRemotes"):WaitForChild("InvRequest"):InvokeServer(unpack(args))
                             end)
                         end)
                     end
@@ -176,7 +132,6 @@ end
 -- AUTO REVISTAR
 local function toggleAutoSearch()
     S.autoSearch = not S.autoSearch
-    
     if S.autoSearch then
         autoSearchLoop = task.spawn(function()
             local RS = ReplicatedStorage:WaitForChild("RemoteNovos")
@@ -184,7 +139,6 @@ local function toggleAutoSearch()
             local DETECTION_RADIUS = 10
             local CheckInterval = 0.5
             local detectados = {}
-            
             local function isDead(player)
                 if player and player.Character then
                     local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
@@ -192,28 +146,19 @@ local function toggleAutoSearch()
                 end
                 return false
             end
-            
-            local function distanceBetween(p1, p2)
-                return (p1 - p2).Magnitude
-            end
-            
+            local function distanceBetween(p1, p2) return (p1 - p2).Magnitude end
             while S.autoSearch do
                 task.wait(CheckInterval)
-                
                 local character = LP.Character
                 if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
-                
                 local pos = character.HumanoidRootPart.Position
-                
                 for _, otherPlayer in ipairs(P:GetPlayers()) do
                     if otherPlayer ~= LP and isDead(otherPlayer) and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
                         local otherPos = otherPlayer.Character.HumanoidRootPart.Position
                         if distanceBetween(pos, otherPos) <= DETECTION_RADIUS then
                             if not detectados[otherPlayer] then
                                 detectados[otherPlayer] = true
-                                pcall(function()
-                                    dsada:FireServer("/revistar morto")
-                                end)
+                                pcall(function() dsada:FireServer("/revistar morto") end)
                             end
                         else
                             detectados[otherPlayer] = nil
@@ -233,67 +178,151 @@ end
 local function createFlySystem()
     local flyEnabled = false
     local moveVector = Vector3.new()
-    
     local function updateMoveVector()
         local cam = workspace.CurrentCamera
         local look = cam.CFrame.LookVector
         local right = cam.CFrame.RightVector
         local up = Vector3.new(0, 1, 0)
-        
         local forward = 0
         local rightVal = 0
         local upVal = 0
-        
         if UIS:IsKeyDown(Enum.KeyCode.W) then forward += 1 end
         if UIS:IsKeyDown(Enum.KeyCode.S) then forward -= 1 end
         if UIS:IsKeyDown(Enum.KeyCode.A) then rightVal -= 1 end
         if UIS:IsKeyDown(Enum.KeyCode.D) then rightVal += 1 end
         if UIS:IsKeyDown(Enum.KeyCode.Space) then upVal += 1 end
         if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then upVal -= 1 end
-        
         local dir = (look * forward + right * rightVal + up * upVal)
         moveVector = dir.Magnitude > 0 and dir.Unit or Vector3.new()
     end
-    
     S.fly = not S.fly
     flyEnabled = S.fly
-    
     if flyEnabled then
         pcall(function()
-            if LP.Character:FindFirstChild("DanoQueda") then
-                LP.Character:FindFirstChild("DanoQueda"):Destroy()
-            end
+            if LP.Character:FindFirstChild("DanoQueda") then LP.Character:FindFirstChild("DanoQueda"):Destroy() end
         end)
-        
         local connection
         connection = RS.RenderStepped:Connect(function()
             if not flyEnabled or not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then
                 if connection then connection:Disconnect() end
                 return
             end
-            
             local character = LP.Character
             local humanoid = character:FindFirstChild("Humanoid")
             local rootPart = character:FindFirstChild("HumanoidRootPart")
-            
             if flyEnabled and rootPart and humanoid then
                 updateMoveVector()
                 local cam = workspace.CurrentCamera
                 local _, y, _ = cam.CFrame.Rotation:ToEulerAnglesYXZ()
                 rootPart.CFrame = CFrame.new(rootPart.Position) * CFrame.Angles(0, y, 0)
                 rootPart.AssemblyLinearVelocity = moveVector * S.flySpeed
-                if humanoid.AutoRotate then
-                    humanoid.AutoRotate = false
-                end
+                if humanoid.AutoRotate then humanoid.AutoRotate = false end
             end
         end)
         notify("Fly + Bypass ON - Use WASD + Space/Ctrl")
     else
-        if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-            LP.Character.Humanoid.AutoRotate = true
-        end
+        if LP.Character and LP.Character:FindFirstChild("Humanoid") then LP.Character.Humanoid.AutoRotate = true end
         notify("Fly OFF")
     end
+end
+
+-- AIMBOT ATUALIZADO (Baseado no exemplo fornecido)
+local function updateFOV()
+    if S.fe then
+        if not fovCircle then
+            pcall(function()
+                fovCircle = Drawing.new("Circle")
+                fovCircle.Visible = true
+                fovCircle.Thickness = 2
+                fovCircle.Color = Color3.fromRGB(128, 0, 128)
+                fovCircle.Filled = false
+                fovCircle.Radius = S.fv
+                fovCircle.Position = Camera.ViewportSize / 2
+            end)
+        end
+        if fovCircle then
+            fovCircle.Position = Camera.ViewportSize / 2
+            fovCircle.Radius = S.fv
+            fovCircle.Visible = true
+            fovCircle.Color = currentTarget and Color3.fromRGB(255, 51, 51) or Color3.fromRGB(128, 0, 128)
+        end
+    elseif fovCircle then
+        fovCircle.Visible = false
+    end
+end
+
+local function lookAt(target)
+    local lookVector = (target - Camera.CFrame.Position).unit
+    local newCFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + lookVector)
+    Camera.CFrame = newCFrame
+end
+
+local function getClosestPlayerInFOV(trg_part)
+    local nearest = nil
+    local last = math.huge
+    local playerMousePos = Camera.ViewportSize / 2
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild(trg_part) then
+            local part = player.Character[trg_part]
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            
+            -- Verificações de filtro
+            if S.kc and humanoid and humanoid.Health <= 0 then continue end
+            if S.tc and player.Team and LP.Team and player.Team == LP.Team then continue end
+            
+            local ePos, isVisible = Camera:WorldToViewportPoint(part.Position)
+            local distance = (Vector2.new(ePos.x, ePos.y) - playerMousePos).Magnitude
+            
+            if distance < last and isVisible and distance < S.fv then
+                -- Wall Check
+                if S.wc then
+                    local rayOrigin = Camera.CFrame.Position
+                    local rayDirection = (part.Position - rayOrigin).Unit * 1000
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {LP.Character}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                    local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+                    if result and not result.Instance:IsDescendantOf(player.Character) then
+                        continue
+                    end
+                end
+                
+                last = distance
+                nearest = player
+            end
+        end
+    end
+    return nearest
+end
+
+local function startAimbot()
+    if aimbotConnection then aimbotConnection:Disconnect() end
+    aimbotConnection = RunService.RenderStepped:Connect(function()
+        updateFOV()
+        if S.am then
+            local closest = getClosestPlayerInFOV("Head")
+            if closest and closest.Character:FindFirstChild("Head") then
+                currentTarget = closest.Character
+                lookAt(closest.Character.Head.Position)
+            else
+                currentTarget = nil
+            end
+        else
+            currentTarget = nil
+        end
+    end)
+end
+
+local function stopAimbot()
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
+    if fovCircle then
+        fovCircle:Remove()
+        fovCircle = nil
+    end
+    currentTarget = nil
 end
 
 -- Criar UI com DrRay
@@ -355,7 +384,13 @@ end)
 
 aimbotTab.newToggle("Auto Aim", "AIMBOT GRUDADO ATIVO", S.am, function(state)
     S.am = state
-    notify("Auto Aim " .. (state and "ON - GRUDADO!" or "OFF"))
+    if state then
+        startAimbot()
+        notify("Auto Aim ON - GRUDADO!")
+    else
+        stopAimbot()
+        notify("Auto Aim OFF")
+    end
 end)
 
 -- Aba ESP
@@ -385,9 +420,7 @@ end)
 -- Aba Exploits
 local exploitsTab = DrRayLibrary.newTab("Exploits", "rbxassetid://8560362689")
 
-exploitsTab.newButton("Fly + Bypass", "Voo com bypass de dano", function()
-    createFlySystem()
-end)
+exploitsTab.newButton("Fly + Bypass", "Voo com bypass de dano", function() createFlySystem() end)
 
 exploitsTab.newSlider("Fly Speed", "Velocidade do voo", 100, 16, S.flySpeed, function(value)
     S.flySpeed = value
@@ -404,107 +437,11 @@ exploitsTab.newSlider("Walk Speed", "Velocidade de caminhada", 150, 16, S.walkSp
     notify("Walk Speed: " .. tostring(value))
 end)
 
-exploitsTab.newButton("Auto Roubar Itens", "Pega itens automaticamente", function()
-    toggleAutoRob()
-end)
+exploitsTab.newButton("Auto Roubar Itens", "Pega itens automaticamente", function() toggleAutoRob() end)
 
-exploitsTab.newButton("Auto Revistar", "Revista mortos automaticamente", function()
-    toggleAutoSearch()
-end)
+exploitsTab.newButton("Auto Revistar", "Revista mortos automaticamente", function() toggleAutoSearch() end)
 
--- FUNÇÕES DO AIMBOT (corrigidas)
-local function findTarget()
-    local closest = nil
-    local shortestDistance = math.huge
-    local screenCenter = Vector2.new(C.ViewportSize.X / 2, C.ViewportSize.Y / 2)
-    
-    for _, player in pairs(P:GetPlayers()) do
-        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local humanoid = character:FindFirstChild("Humanoid")
-            local rootPart = character.HumanoidRootPart
-            
-            if humanoid and rootPart then
-                if S.kc and humanoid.Health <= 0 then continue end
-                if S.tc and player.Team and LP.Team and player.Team == LP.Team then continue end
-                
-                local screenPos, onScreen = C:WorldToViewportPoint(rootPart.Position)
-                if onScreen then
-                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-                    if distance <= S.fv and distance < shortestDistance then
-                        if S.wc then
-                            local rayOrigin = C.CFrame.Position
-                            local rayDirection = (rootPart.Position - rayOrigin).Unit * 1000
-                            local raycastParams = RaycastParams.new()
-                            raycastParams.FilterDescendantsInstances = {LP.Character}
-                            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                            local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-                            if result and not result.Instance:IsDescendantOf(character) then
-                                continue
-                            end
-                        end
-                        
-                        closest = character
-                        shortestDistance = distance
-                    end
-                end
-            end
-        end
-    end
-    
-    return closest
-end
-
-local function aimAtTarget(target)
-    if not target or not target:FindFirstChild("HumanoidRootPart") then return end
-    
-    local targetPart = target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target:FindFirstChild("Torso") or target.HumanoidRootPart
-    if not targetPart then return end
-    
-    local targetPos = targetPart.Position
-    local cameraPos = C.CFrame.Position
-    
-    local targetVelocity = Vector3.new(0, 0, 0)
-    pcall(function()
-        targetVelocity = target.HumanoidRootPart.AssemblyLinearVelocity
-    end)
-    
-    local distance = (targetPos - cameraPos).Magnitude
-    local timeToHit = distance / 1000
-    local predictedPos = targetPos + (targetVelocity * timeToHit)
-    
-    local newCFrame = CFrame.new(cameraPos, predictedPos)
-    
-    if S.smoothness <= 0.001 then
-        C.CFrame = newCFrame
-    else
-        local lerpValue = math.clamp(1 - (S.smoothness * 10), 0.1, 1)
-        C.CFrame = C.CFrame:Lerp(newCFrame, lerpValue)
-    end
-end
-
-local function updateFOV()
-    if S.fe then
-        if not fovCircle then
-            pcall(function()
-                fovCircle = Drawing.new("Circle")
-                fovCircle.Thickness = 2
-                fovCircle.Filled = false
-                fovCircle.Transparency = 0.8
-                fovCircle.NumSides = 64
-            end)
-        end
-        if fovCircle then
-            fovCircle.Position = Vector2.new(C.ViewportSize.X / 2, C.ViewportSize.Y / 2)
-            fovCircle.Radius = S.fv
-            fovCircle.Visible = true
-            fovCircle.Color = currentTarget and Color3.new(1, 0.2, 0.2) or Color3.new(0.2, 1, 0.2)
-        end
-    elseif fovCircle then
-        fovCircle.Visible = false
-    end
-end
-
+-- FUNÇÕES ESP E OUTRAS
 local function updateESP()
     for _, player in pairs(P:GetPlayers()) do
         if player ~= LP then
@@ -517,7 +454,6 @@ local function updateESP()
                             gui.StudsOffset = Vector3.new(0, 2, 0)
                             gui.AlwaysOnTop = true
                             gui.Parent = player.Character.Head
-                            
                             local text = Instance.new("TextLabel", gui)
                             text.Size = UDim2.new(1, 0, 1, 0)
                             text.BackgroundTransparency = 1
@@ -526,11 +462,9 @@ local function updateESP()
                             text.TextStrokeTransparency = 0
                             text.TextStrokeColor3 = Color3.new(0, 0, 0)
                             text.TextSize = 12
-                            
                             espList[player] = { gui = gui, text = text }
                         end)
                     end
-                    
                     if espList[player] and espList[player].gui.Parent then
                         pcall(function()
                             local txt = ""
@@ -543,7 +477,6 @@ local function updateESP()
                                 txt = txt .. math.floor(dist) .. " studs"
                             end
                             espList[player].text.Text = txt
-                            
                             if S.ss and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
                                 local dist = (player.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
                                 if dist < 50 then
@@ -602,25 +535,11 @@ RS.Heartbeat:Connect(function(deltaTime)
     local now = tick()
     if now - lastUpdate < 0.016 then return end
     lastUpdate = now
-    
     pcall(function()
-        if S.am then
-            currentTarget = findTarget()
-            if currentTarget then
-                aimAtTarget(currentTarget)
-            else
-                currentTarget = nil
-            end
-        else
-            currentTarget = nil
-        end
-        
         if now % 0.1 < 0.016 then
-            updateFOV()
             updateESP()
             updateHitbox()
         end
-        
         updateSpeed()
     end)
 end)
